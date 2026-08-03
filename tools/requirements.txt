@@ -1,0 +1,12 @@
+# AquiFuturo AR — Python tool dependencies
+# Python 3.11. No web framework. No database.
+# SPEC.md Appendix: this list is part of the thesis appendix.
+# Do not add packages without flagging the addition.
+
+soundfile>=0.12.1      # audio file info (validate_assets.py — track sample-rate/length checks)
+pygltflib>=1.16.0      # GLB inspection (validate_assets.py — child-name check)
+numpy>=1.26.0          # array ops used by skeletonize.py
+scipy>=1.12.0          # spatial algorithms for skeletonization (k-NN, Delaunay)
+trimesh>=4.0.0         # mesh I/O and processing in skeletonize.py
+ruff>=0.4.0            # linter (CI only)
+mypy>=1.9.0            # type checker (CI only)
