@@ -10,5 +10,6 @@ scipy>=1.12.0          # spatial algorithms (k-NN, MST, Dijkstra) in skeletonize
 trimesh>=4.0.0         # mesh I/O and processing in skeletonize.py
 networkx>=3.2.0        # skeleton graph, BFS, Strahler, TSP in skeletonize.py
 fast-simplification>=0.1.7  # optional mesh decimation in skeletonize.py
+polyscope>=2.1.0       # interactive 3D viewer for --viz flag in skeletonize.py (dev/offline only)
 ruff>=0.4.0            # linter (CI only)
 mypy>=1.9.0            # type checker (CI only)

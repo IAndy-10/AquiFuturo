@@ -1009,6 +1009,85 @@ def build_root_graph(
 
 
 # ---------------------------------------------------------------------------
+# Polyscope visualisation  (--viz flag; requires polyscope>=2.1.0)
+# ---------------------------------------------------------------------------
+
+#: Node-class colour palette (RGB 0-1) used in the Polyscope viewer.
+_CLASS_COLORS: dict[str, list[float]] = {
+    "trunk_base": [0.80, 0.10, 0.10],  # red
+    "primary":    [0.90, 0.50, 0.10],  # orange
+    "lateral":    [0.90, 0.85, 0.10],  # yellow
+    "fine":       [0.20, 0.70, 0.20],  # green
+    "terminal":   [0.20, 0.40, 0.90],  # blue
+}
+
+
+def _visualize_polyscope(
+    mesh: trimesh.Trimesh,
+    skel_positions: np.ndarray,
+    skel_edges: np.ndarray,
+    graph: dict[str, Any],
+) -> None:
+    """Open an interactive Polyscope window showing the mesh + skeleton overlay.
+
+    Skeleton nodes are coloured by class; the TSP tour is highlighted in magenta.
+    Both the mesh and skeleton must be in the same coordinate space before calling.
+    """
+    try:
+        import polyscope as ps  # noqa: PLC0415
+    except ImportError:
+        log.error(
+            "polyscope is not installed. Install it with: "
+            "pip install 'polyscope>=2.1.0'"
+        )
+        return
+
+    ps.init()
+    ps.set_up_dir("y_up")
+
+    # ── Mesh surface (semi-transparent) ───────────────────────────────────────
+    ps_mesh = ps.register_surface_mesh("mesh", mesh.vertices, mesh.faces)
+    ps_mesh.set_transparency(0.70)   # 0 = opaque, 1 = invisible in Polyscope
+    ps_mesh.set_color((0.75, 0.65, 0.55))
+
+    # ── Skeleton nodes coloured by class ──────────────────────────────────────
+    nodes = graph["nodes"]
+    node_colors = np.array(
+        [_CLASS_COLORS.get(n["class"], [0.5, 0.5, 0.5]) for n in nodes],
+        dtype=float,
+    )
+    ps_pts = ps.register_point_cloud("skeleton_nodes", skel_positions)
+    ps_pts.add_color_quantity("class", node_colors, enabled=True)
+    ps_pts.set_radius(0.015, relative=False)
+
+    # ── Skeleton edges ────────────────────────────────────────────────────────
+    ps_edges = ps.register_curve_network(
+        "skeleton_edges", skel_positions, skel_edges, radius=0.005
+    )
+    ps_edges.set_color((0.85, 0.85, 0.85))
+
+    # ── TSP tour (magenta) ────────────────────────────────────────────────────
+    if graph.get("tours"):
+        seq = graph["tours"][0]["node_sequence"]
+        tour_edge_arr = np.array(
+            [[seq[i], seq[i + 1]] for i in range(len(seq) - 1)],
+            dtype=int,
+        )
+        ps_tour = ps.register_curve_network(
+            "tsp_tour", skel_positions, tour_edge_arr, radius=0.008
+        )
+        ps_tour.set_color((0.90, 0.20, 0.80))
+
+    # Legend hint
+    log.info(
+        "Polyscope legend — nodes: red=trunk_base  orange=primary  "
+        "yellow=lateral  green=fine  blue=terminal  | magenta=TSP tour"
+    )
+    log.info("Close the Polyscope window to exit.")
+    ps.show()
+
+
+# ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
 
@@ -1112,6 +1191,15 @@ def main() -> None:
         help=(
             "Shift all node positions so the trunk_base node is at the origin. "
             "Use only if the Blender model origin is not already at the trunk base."
+        ),
+    )
+    parser.add_argument(
+        "--viz", action="store_true",
+        help=(
+            "Open an interactive Polyscope viewer after extraction. "
+            "Shows the mesh surface (semi-transparent) overlaid with the skeleton "
+            "nodes (coloured by class) and the TSP tour (magenta). "
+            "Requires polyscope>=2.1.0 to be installed."
         ),
     )
 
@@ -1270,6 +1358,10 @@ def main() -> None:
         root_pos = skel_positions[root_node].copy()
         skel_positions = skel_positions - root_pos
         original_vertices = original_vertices - root_pos
+        # Also shift the (decimated) mesh so --viz overlay stays aligned
+        mesh = trimesh.Trimesh(
+            vertices=mesh.vertices - root_pos, faces=mesh.faces, process=False
+        )
         log.info("      Shifted origin to root node (--center-at-root)")
 
     # ── 5. Build JSON and write ───────────────────────────────────────────────
@@ -1308,6 +1400,11 @@ def main() -> None:
     log.info("      schema_version: %s  coordinate_space: %s",
              SUPPORTED_SCHEMA_VERSION, args.coordinate_space)
     log.info("Done. Run `python tools/validate_assets.py` to verify.")
+
+    # ── Optional interactive viewer ────────────────────────────────────────────
+    if args.viz:
+        log.info("Opening Polyscope viewer …")
+        _visualize_polyscope(mesh, skel_positions, skel_edges, graph)
 
 
 if __name__ == "__main__":
