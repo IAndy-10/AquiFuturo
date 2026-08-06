@@ -369,6 +369,7 @@ def run_validation(repo_root: Path) -> int:
     all_warnings: list[str] = []
 
     graph_path = repo_root / "data" / "root_graph.json"
+    branch_graph_path = repo_root / "data" / "branch_graph.json"
     manifest_path = repo_root / "data" / "audio_manifest.json"
     tracks_dir = repo_root / "unity" / "Assets" / "Audio" / "Tracks"
     interaction_dir = repo_root / "unity" / "Assets" / "Audio" / "Interaction"
@@ -378,7 +379,7 @@ def run_validation(repo_root: Path) -> int:
     log.info(f"Repo root: {repo_root}")
 
     # --- root_graph.json ---
-    log.info("[1/3] Validating root_graph.json …")
+    log.info("[1/4] Validating root_graph.json …")
     graph_errors = validate_root_graph(graph_path)
     for e in graph_errors:
         if e.startswith("TODO"):
@@ -388,8 +389,19 @@ def run_validation(repo_root: Path) -> int:
             all_errors.append(e)
             log.error(e)
 
+    # --- branch_graph.json ---
+    log.info("[2/4] Validating branch_graph.json …")
+    branch_errors = validate_root_graph(branch_graph_path)
+    for e in branch_errors:
+        if e.startswith("TODO"):
+            all_warnings.append(e)
+            log.warning(e)
+        else:
+            all_errors.append(e)
+            log.error(e)
+
     # --- audio_manifest.json ---
-    log.info("[2/3] Validating audio_manifest.json and audio files …")
+    log.info("[3/4] Validating audio_manifest.json and audio files …")
     audio_errors = validate_audio_manifest(manifest_path, tracks_dir, interaction_dir)
     for e in audio_errors:
         if e.startswith("TODO"):
@@ -400,7 +412,7 @@ def run_validation(repo_root: Path) -> int:
             log.error(e)
 
     # --- tree_full.glb ---
-    log.info("[3/3] Validating tree_full.glb …")
+    log.info("[4/4] Validating tree_full.glb …")
     glb_errors = validate_glb(glb_path)
     for e in glb_errors:
         if e.startswith("TODO"):
