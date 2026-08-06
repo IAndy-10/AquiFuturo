@@ -104,3 +104,5 @@ DerivedData/
 sessions/
 *.csv
 *.log
+imgui.ini
+.polyscope.ini
