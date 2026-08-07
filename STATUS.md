@@ -1,7 +1,7 @@
 # AquiFuturo AR — Project Status
 
-**Date:** 2026-08-05
-**Branch:** `main` (clean)
+**Date:** 2026-08-07
+**Branch:** `feat/audio-unity-test`
 **Spec version:** v1.1
 
 ---
@@ -11,7 +11,7 @@
 | ID | Milestone | Status | Blocker |
 |---|---|---|---|
 | M0 | Repo + contracts | done | — |
-| M1 | Placeholder AR end-to-end on device | blocked | Unity MCP scene assembly (Session C1) not done; no audio tracks yet |
+| M1 | Placeholder AR end-to-end on device | **in progress** | Audio wiring unverified (TrackMixer Inspector fields); placement confirmed on device |
 | M2 | Real tree assets | partial | `tree_full.glb` pending Blender session |
 | M3 | Audio complete | not started | depends on M1 + M2 |
 | M4 | Interaction + polish | not started | depends on M3 |
@@ -46,15 +46,20 @@ Acceptance: placeholder cylinder placeable in AR on device, anchored, four place
 
 | Item | State | Owner |
 |---|---|---|
-| Unity scene assembled (`Bootstrap`, `ARSession`, `TrackMixer` hierarchy, reticle) | **pending** | Unity MCP Session C1 |
-| `TreeInstance` prefab wired (`GameManager`, `TreePlacement`, `TrackMixer`, `RootGraphLoader`) | **pending** | Unity MCP Session C1 |
-| AR plane detection + tap-to-place + `ARAnchor` attach | **pending** | Unity MCP Session C1 |
-| Four placeholder AudioClips imported and playing via `PlayScheduled()` | **pending** | Unity MCP Session C1 |
-| LPF + pan responding to phone orientation (pose axes live) | **pending** | Unity MCP Session C1 |
+| Unity scene assembled (`Bootstrap`, `ARSession`, `TrackMixer` hierarchy, reticle) | **done** | — |
+| AR plane detection + tap-to-place + `ARAnchor` attach | **done** — confirmed on device | — |
+| Placeholder cylinder visible and anchored to detected plane | **done** — confirmed on device | — |
+| All 4 ScriptableObject config assets created (`AudioSettings`, `DebugSettings`, `InteractionSettings`, `PlacementSettings`) | **done** | — |
+| Four placeholder WAV tracks imported (`track_drone`, `track_root_rave`, `track_soil`, `track_canopy`) | **done** | — |
+| `TreeInstance` prefab wired (`GameManager`, `TreePlacement`, `TrackMixer`, `RootGraphLoader`) | **unverified** | Unity Inspector |
+| Four placeholder AudioClips playing via `PlayScheduled()` | **unverified** — TrackMixer Inspector fields need check | Unity Inspector |
+| LPF + pan responding to phone orientation (pose axes live) | **unverified** — depends on audio step above | — |
 | `data/audio_manifest.json` authored | **pending** | [CC] |
 | TestFlight placeholder build submitted (Apple review cleared early) | **pending** | [ME] |
 
 **Critical path note:** TestFlight first-submission review takes 1–3 days (SPEC §16.4). Submit a placeholder build as soon as M1 scene is assembled — do not wait for real assets.
+
+**Next action:** Verify TrackMixer Inspector wiring in Unity (4 fields: `_audioConfig`, `_gameManager`, `_poseAnalyzer`, `_tracks[0..3]`). Confirm audio plays on device before moving to M2 mesh swap.
 
 ---
 
