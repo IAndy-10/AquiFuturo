@@ -4,6 +4,7 @@ using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using AquiFuturo.Core;
 using AquiFuturo.Audio;
+using AquiFuturo.Graph;
 
 namespace AquiFuturo.Placement
 {
@@ -18,6 +19,7 @@ namespace AquiFuturo.Placement
         [SerializeField] private GameManager _gameManager;
         [SerializeField] private PoseAnalyzer _poseAnalyzer;
         [SerializeField] private TreeAdjuster _treeAdjuster;
+        [SerializeField] private RootMeshBuilder _rootMeshBuilder;
         [SerializeField] private GameObject _treePrefab;
 
         private ARRaycastManager _raycastManager;
@@ -102,6 +104,7 @@ namespace AquiFuturo.Placement
             _placementAttempts = 0;
 
             _poseAnalyzer?.ClearTreeBase();
+            _rootMeshBuilder?.ClearMesh();
             _gameManager?.ResetPlacement();
         }
 
@@ -158,6 +161,7 @@ namespace AquiFuturo.Placement
 
             _poseAnalyzer?.SetTreeBase(_treeInstance.transform);
             _treeAdjuster?.SetTree(_treeInstance);
+            _rootMeshBuilder?.BuildMesh(_treeInstance.transform);
             _gameManager?.OnTreePlaced();
 
             long elapsed = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - _placementStartMs;
