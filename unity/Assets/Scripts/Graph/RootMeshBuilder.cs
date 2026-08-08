@@ -36,7 +36,8 @@ namespace AquiFuturo.Graph
             ClearMesh();
 
             RootGraph graph  = _graphLoader.Graph;
-            int       sides  = _config != null ? _config.tubeSides : 6;
+            int       sides  = _config != null ? _config.tubeSides       : 6;
+            float     scale  = _config != null ? _config.scaleMultiplier : 1f;
 
             // Build fast node lookups
             var nodePos    = new Dictionary<int, Vector3>(graph.Nodes.Count);
@@ -63,11 +64,11 @@ namespace AquiFuturo.Graph
                 float sr = nodeRadius.TryGetValue(edge.Source, out float s) ? s : 0.01f;
                 float er = nodeRadius.TryGetValue(edge.Target,  out float e) ? e : 0.01f;
 
-                // Shift so trunk_base sits at local origin (placement point)
-                Vector3 localStart = startPos - originOffset;
-                Vector3 localEnd   = endPos   - originOffset;
+                // Shift so trunk_base sits at local origin, then apply scale
+                Vector3 localStart = (startPos - originOffset) * scale;
+                Vector3 localEnd   = (endPos   - originOffset) * scale;
 
-                Mesh tube = CreateTubeMesh(localStart, localEnd, sr, er, sides);
+                Mesh tube = CreateTubeMesh(localStart, localEnd, sr * scale, er * scale, sides);
                 tempMeshes.Add(tube);
                 combines.Add(new CombineInstance { mesh = tube, transform = Matrix4x4.identity });
             }
