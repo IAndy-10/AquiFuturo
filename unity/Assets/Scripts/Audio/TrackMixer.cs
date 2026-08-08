@@ -9,6 +9,12 @@ namespace AquiFuturo.Audio
     /// the intro gain ramp and tracking-loss mute.
     /// All modulation is 2D — no positional audio.
     /// No heap allocations in Update.
+    ///
+    /// One track is marked IsStatic on its TrackChannel (the drone/foundation layer).
+    /// It receives only base gain + tracking-loss mute — no LPF, no pan, no tilt.
+    /// The other three tracks receive all four mappings, each with individual
+    /// LpfSensitivity and PanWidth so their spatial and timbral behaviour is distinct.
+    /// Spatial (pan) is the primary expressive axis.
     /// </summary>
     public sealed class TrackMixer : MonoBehaviour
     {
@@ -17,13 +23,13 @@ namespace AquiFuturo.Audio
         [SerializeField] private PoseAnalyzer _poseAnalyzer;
         [SerializeField] private GameManager _gameManager;
 
-        [Header("Tracks — must match manifest order: root_rave, soil, canopy, drone")]
+        [Header("Tracks — order in array does not affect modulation (each track owns its config)")]
         [SerializeField] private TrackChannel[] _tracks;
 
         private bool _started;
 
         // Tracking-loss mute ramp.
-        private float _muteGain = 1f;  // linear [0,1]
+        private float _muteGain = 1f;  // linear [0, 1]
         private float _muteGainVel;
 
         private void Awake()
@@ -94,44 +100,60 @@ namespace AquiFuturo.Audio
 
         private void ApplyModulation()
         {
-            float attention = _poseAnalyzer.Attention;
+            float attention  = _poseAnalyzer.Attention;
             float azimuthRad = _poseAnalyzer.Azimuth * Mathf.Deg2Rad;
             float tilt       = _poseAnalyzer.Tilt;
             float distance   = _poseAnalyzer.Distance;
 
-            // Mapping 1 — Logarithmic LPF cutoff (SPEC §9.3). Never linear in Hz.
-            float cutoffHz = _audioConfig.cutoffMinHz *
-                Mathf.Pow(_audioConfig.cutoffMaxHz / _audioConfig.cutoffMinHz, attention);
-
-            // Mapping 4 — Distance cutoff ceiling multiplicative cap.
-            float ceiling = _audioConfig.distanceCutoffCeiling.Evaluate(distance);
-            cutoffHz = Mathf.Min(cutoffHz, ceiling);
-
-            // Mapping 2 — Azimuth → pan (sine form, SPEC §9.3).
+            // Spatial base — sine of azimuth maps cleanly to [-1, 1] pan range.
+            // Per-track PanWidth is applied below; this is the shared direction signal.
             float panBase = Mathf.Sin(azimuthRad);
 
-            // Mapping 4 — Distance master gain offset in dB.
+            // Distance gain offset in dB — shared across all active tracks (Mapping 4).
             float distGainDb = _audioConfig.distanceGainDb.Evaluate(distance);
+
+            // Distance LPF ceiling — upper bound on cutoff regardless of attention (Mapping 4).
+            float distCeiling = _audioConfig.distanceCutoffCeiling.Evaluate(distance);
 
             for (int i = 0; i < _tracks.Length; i++)
             {
                 TrackChannel ch = _tracks[i];
                 if (ch == null || ch.Source == null) continue;
 
+                if (ch.IsStatic)
+                {
+                    // Static track (drone/foundation): fully open filter, centred pan,
+                    // base gain only. Provides a stable anchor while the other three move.
+                    ch.SetCutoffHz(_audioConfig.cutoffMaxHz);
+                    ch.SetPan(0f);
+                    float staticDb     = Mathf.Clamp(ch.BaseGainDb, _audioConfig.gainMinDb, _audioConfig.gainMaxDb);
+                    ch.Source.volume   = Mathf.Pow(10f, staticDb / 20f) * _muteGain;
+                    continue;
+                }
+
+                // ── Active track — all four mappings ──────────────────────
+
+                // Mapping 1: logarithmic LPF (SPEC §9.3). Per-track LpfSensitivity scales
+                // how deeply attention drives the filter on this track. Never linear in Hz.
+                float effectiveAttention = attention * ch.LpfSensitivity;
+                float cutoffHz = _audioConfig.cutoffMinHz *
+                    Mathf.Pow(_audioConfig.cutoffMaxHz / _audioConfig.cutoffMinHz, effectiveAttention);
+                cutoffHz = Mathf.Min(cutoffHz, distCeiling);
                 ch.SetCutoffHz(cutoffHz);
 
-                // Per-track pan width multiplier (SPEC §9.3 Mapping 2).
-                float panWidth = (i < _audioConfig.panWidths.Length) ? _audioConfig.panWidths[i] : 1f;
-                ch.SetPan(panBase * panWidth);
+                // Mapping 2: spatial pan — primary expressive axis.
+                // PanWidth is an intrinsic property of the track, set in its Inspector.
+                ch.SetPan(panBase * ch.PanWidth);
 
-                // Mapping 3 — Tilt vertical layer balance (SPEC §9.3 Mapping 3).
-                float tiltGainDb = _audioConfig.tiltGainRangeDb * (ch.TiltBias * -tilt);
-                float totalDb = ch.BaseGainDb + tiltGainDb + distGainDb;
-                totalDb = Mathf.Clamp(totalDb, _audioConfig.gainMinDb, _audioConfig.gainMaxDb);
+                // Mapping 3: tilt → vertical layer balance.
+                // TiltBias +1 = canopy (louder when phone points up, tilt > 0).
+                // TiltBias -1 = underground (louder when phone points down, tilt < 0).
+                float tiltGainDb = _audioConfig.tiltGainRangeDb * (ch.TiltBias * tilt);
 
-                // Convert dB to linear, apply tracking-loss mute.
-                float linearGain = Mathf.Pow(10f, totalDb / 20f) * _muteGain;
-                ch.Source.volume = linearGain;
+                // Mapping 4: sum base + tilt + distance, clamp, convert, mute.
+                float totalDb    = ch.BaseGainDb + tiltGainDb + distGainDb;
+                totalDb          = Mathf.Clamp(totalDb, _audioConfig.gainMinDb, _audioConfig.gainMaxDb);
+                ch.Source.volume = Mathf.Pow(10f, totalDb / 20f) * _muteGain;
             }
         }
 

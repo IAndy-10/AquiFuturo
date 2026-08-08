@@ -7,6 +7,7 @@ Format: `<type>: <description>` — one line per milestone entry.
 
 ## Unreleased
 
+- feat: per-track modulation — TrackChannel gains IsStatic/LpfSensitivity/PanWidth; drone static, three tracks modulated independently; fix tilt mapping sign
 - fix: M1 audio silence — add startImmediatelyForTesting flag to AudioSettingsConfig + TrackMixer; fix PoseAnalyzer null-config LPF fail-open
 - feat: add tools/skeletonize.py — first iteration of mesh-to-root_graph.json pipeline (SPEC §6.4 / §5.1); Polyscope --viz flag; initial root_graph.json and branch_graph.json outputs
 - chore: M0 — repo structure, CLAUDE.md, .gitignore, .gitattributes, docs stubs, validate_assets.py

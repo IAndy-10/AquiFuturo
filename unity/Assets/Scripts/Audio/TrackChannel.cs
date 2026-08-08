@@ -19,29 +19,36 @@ namespace AquiFuturo.Audio
         [Tooltip("Base gain in dB from audio_manifest.json.")]
         [SerializeField] private float _baseGainDb = -6f;
 
-        [Tooltip("Tilt bias from audio_manifest.json. -1 = underground, +1 = canopy, 0 = neutral.")]
+        [Tooltip("Tilt bias. -1 = underground (louder when phone points down), " +
+                 "+1 = canopy (louder when phone points up), 0 = neutral.")]
         [SerializeField] private float _tiltBias = 0f;
 
-        [Tooltip("Index into AudioSettingsConfig.panWidths (0=root_rave,1=soil,2=canopy,3=drone).")]
-        [SerializeField] private int _panWidthIndex = 0;
+        [Header("Modulation")]
+        [Tooltip("When true, this track is static — LPF stays fully open, pan stays centred, " +
+                 "only base gain + tracking-loss mute are applied. Use for the drone/foundation layer.")]
+        [SerializeField] private bool _isStatic = false;
+
+        [Tooltip("How strongly attention drives the LPF on this track. " +
+                 "1 = full 800–20 kHz range, 0.5 = 800–4 kHz range, 0 = always at cutoffMinHz.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _lpfSensitivity = 1f;
+
+        [Tooltip("Stereo pan width for this track. 1 = full ±1 range, 0 = always centred. " +
+                 "Spatial is the primary expressive axis — set deliberately per track.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float _panWidth = 1f;
 
         // Cached component references — never call GetComponent in Update.
         private AudioSource _source;
         private AudioLowPassFilter _lpf;
 
-        public string TrackId => _trackId;
-
-        /// <summary>The underlying AudioSource. TrackMixer calls PlayScheduled on it directly.</summary>
-        public AudioSource Source => _source;
-
-        /// <summary>Base gain in dB as loaded from the manifest.</summary>
-        public float BaseGainDb => _baseGainDb;
-
-        /// <summary>Tilt bias [-1, 1] from the manifest.</summary>
-        public float TiltBias => _tiltBias;
-
-        /// <summary>Index into AudioSettingsConfig.panWidths.</summary>
-        public int PanWidthIndex => _panWidthIndex;
+        public string TrackId      => _trackId;
+        public AudioSource Source  => _source;
+        public float BaseGainDb    => _baseGainDb;
+        public float TiltBias      => _tiltBias;
+        public bool  IsStatic      => _isStatic;
+        public float LpfSensitivity => _lpfSensitivity;
+        public float PanWidth      => _panWidth;
 
         private void Awake()
         {
@@ -49,9 +56,9 @@ namespace AquiFuturo.Audio
             _lpf    = GetComponent<AudioLowPassFilter>();
 
             // SPEC §9.1 — 2D sources only. This must not be changed.
-            _source.spatialBlend  = 0f;
-            _source.loop          = true;
-            _source.playOnAwake   = false;
+            _source.spatialBlend = 0f;
+            _source.loop         = true;
+            _source.playOnAwake  = false;
         }
 
         /// <summary>Sets the low-pass cutoff frequency in Hz.</summary>
@@ -66,14 +73,6 @@ namespace AquiFuturo.Audio
         {
             if (_source == null) return;
             _source.panStereo = Mathf.Clamp(pan, -1f, 1f);
-        }
-
-        /// <summary>Sets the AudioSource volume from a dB value. Clamps to [gainMinDb, gainMaxDb].</summary>
-        public void SetGainDb(float db, float gainMinDb, float gainMaxDb)
-        {
-            if (_source == null) return;
-            float clamped = Mathf.Clamp(db, gainMinDb, gainMaxDb);
-            _source.volume = Mathf.Pow(10f, clamped / 20f);
         }
     }
 }

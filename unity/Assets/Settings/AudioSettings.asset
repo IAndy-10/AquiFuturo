@@ -21,11 +21,6 @@ MonoBehaviour:
   alignmentSmoothTime: 0.35
   tiltSmoothTime: 0.3
   distanceSmoothTime: 0.5
-  panWidths:
-  - 1
-  - 0.7
-  - 0.85
-  - 0.25
   tiltGainRangeDb: 6
   distanceGainDb:
     serializedVersion: 2
