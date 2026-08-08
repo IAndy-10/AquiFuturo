@@ -342,16 +342,22 @@ AppState.Experiencing → RootInteraction.Update() activates
 
 ---
 
-## Unity wiring required
+## Unity wiring
 
-| Component | Field | Wire to |
-|---|---|---|
-| `TreePlacement` | `_rootMeshBuilder` | `RootMeshBuilder` component in scene |
-| `RootMeshBuilder` | `_graphLoader` | `RootGraphLoader` component in scene |
-| `RootMeshBuilder` | `_config` | `Settings/RootMeshSettings.asset` |
-| `RootInteraction` | `_graphLoader` | `RootGraphLoader` component in scene |
+| GameObject | Component | Field | Wired to |
+|---|---|---|---|
+| `Placement` | `Tree Placement` | `Root Mesh Builder` | `Placement` (self) |
+| `Placement` | `Root Mesh Builder` | `Config` | `Settings/RootMeshSettings.asset` |
+| `Placement` | `Root Mesh Builder` | `Graph Loader` | `Graph` |
+| `Interaction` | `Root Interaction` | `Graph Loader` | `Graph` |
+| `Interaction` | `Root Interaction` | `Game Manager` | `Bootstrap` |
+| `Interaction` | `Root Interaction` | `Pose Analyser` | `Bootstrap` |
 
-Also required in **Project Settings → Tags and Layers:** add `RootMesh` as a named layer.
+`Audio Pool` and `Particle Spawner` on `Root Interaction` are intentionally left unwired
+until those systems are built. Null guards prevent crashes — touch interactions silently
+skip audio and particles until then.
+
+**Project Settings → Tags and Layers:** `RootMesh` is assigned to User Layer 3.
 
 ---
 
@@ -380,6 +386,25 @@ rendered as procedural tube geometry. The mesh is interactive via the existing
 - Branch graph (`branch_graph.json`) not yet loaded or rendered
 - No LOD — full 543-edge mesh at all distances
 - Visual aesthetics: colour by node class, transparency, subsurface scattering, etc.
+
+---
+
+---
+
+### v2 — `6700abc` — Unity scene wiring
+
+**Commit:** `chore: wire RootMeshBuilder and RootInteraction in Unity scene`
+
+Full scene wiring completed. The visual pipeline is connected end-to-end in the Unity
+Editor and ready for Play Mode testing.
+
+**What was done:**
+- Added `RootMesh` layer to Project Settings → Tags and Layers (User Layer 3)
+- Created `Graph` GameObject with `RootGraphLoader` component
+- Created `Interaction` GameObject with `RootInteraction` component
+- Created `Settings/RootMeshSettings.asset` from `RootMeshConfig` ScriptableObject
+- Wired all six Inspector references (see Unity wiring table above)
+- `Audio Pool` and `Particle Spawner` left unwired — those systems not yet in scene
 
 ---
 
