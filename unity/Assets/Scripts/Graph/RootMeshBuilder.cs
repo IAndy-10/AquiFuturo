@@ -16,7 +16,17 @@ namespace AquiFuturo.Graph
         [SerializeField] private RootMeshConfig _config;
         [SerializeField] private RootGraphLoader _graphLoader;
 
+        [Header("Testing")]
+        [Tooltip("Build the mesh at Start() without placement. Disable before field sessions.")]
+        [SerializeField] private bool _buildOnStart;
+
         private GameObject _meshRoot;
+
+        private void Start()
+        {
+            if (_buildOnStart)
+                BuildMesh(transform);
+        }
 
         // ── Public API ────────────────────────────────────────────────────
 
