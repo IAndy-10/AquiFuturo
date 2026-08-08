@@ -28,10 +28,6 @@ namespace AquiFuturo.Core
         public float tiltSmoothTime      = 0.30f;
         public float distanceSmoothTime  = 0.50f;
 
-        [Header("Pan Width Multipliers")]
-        [Tooltip("Per-track pan width: [0]=root_rave, [1]=soil, [2]=canopy, [3]=drone.")]
-        public float[] panWidths = { 1.0f, 0.7f, 0.85f, 0.25f };
-
         [Header("Tilt Gain")]
         [Tooltip("Maximum dB lift or cut from tilt modulation (SPEC §9.3 Mapping 3).")]
         public float tiltGainRangeDb = 6f;
@@ -50,6 +46,10 @@ namespace AquiFuturo.Core
         [Header("Startup")]
         [Tooltip("DSP scheduling margin in seconds (SPEC §9.2). Never set below 0.1.")]
         public double scheduleMarginSeconds = 0.2;
+
+        [Tooltip("M1 testing only — start all four tracks immediately on app launch without requiring placement. " +
+                 "Set to false before M3 audio tuning.")]
+        public bool startImmediatelyForTesting = false;
 
         [Tooltip("Gain in dB during Adjusting state so the mix 'arrives' on confirm.")]
         public float adjustingGainDb = -12f;

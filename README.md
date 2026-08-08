@@ -119,15 +119,34 @@ main  ←  dev  ←  feat/<short-name>
 
 | ID | Status | Description |
 |---|---|---|
-| M0 | ✅ done | Repo + contracts, validator, CLAUDE.md |
-| M1 | 🔄 in progress | Placeholder AR end-to-end on device, four tracks sample-synced |
-| M2 | ⬜ | Real tree assets: `tree_full.glb`, `root_graph.json` validated |
+| M0 | ✅ done | Repo + contracts, validator, CLAUDE.md, all 19 C# scripts imported by Unity |
+| M1 | 🔄 in progress | Placeholder AR end-to-end on device, four tracks sample-synced — **blocked on Unity MCP scene assembly (Session C1)** |
+| M2 | 🔄 in progress | Real tree assets — `root_graph.json` + `branch_graph.json` produced ✅; `tree_full.glb` pending Blender session |
 | M3 | ⬜ | Audio complete: four final tracks, all pose mappings, outdoor mix tuning |
 | M4 | ⬜ | Interaction + polish: raycast, particles, root fade, HUD, reset |
-| M5 | ⬜ | Instrumentation + hardening: SessionLogger, 20-min soak |
-| M6 | ⬜ | Field readiness: IRB, TestFlight, 3 pilot sessions |
+| M5 | ⬜ | Instrumentation + hardening: SessionLogger CSV, 20-min soak |
+| M6 | ⬜ | Field readiness: IRB, TestFlight live, 3 pilot sessions |
 
-See SPEC.md §17 for acceptance criteria per milestone.
+### What's done on `main`
+
+| Area | State |
+|---|---|
+| Repo scaffold, `.gitignore`, `.gitattributes`, Git LFS | ✅ |
+| `validate_assets.py` — all checks, PASS with 2 TODOs | ✅ |
+| `tools/skeletonize.py` — mesh → `root_graph.json` (SPEC §6.4) | ✅ |
+| `tools/graph_builder.py` — Blender-native skeleton extraction | ✅ |
+| `data/root_graph.json` + `data/branch_graph.json` | ✅ |
+| 19 C# scripts across Core / Audio / Placement / Graph / Interaction / UI | ✅ |
+| 4 ScriptableObject config classes (no magic numbers) | ✅ |
+| Unity project open, packages installed, scripts imported (.meta files present) | ✅ |
+| Unity scene assembled (Session C1) | ❌ pending |
+| `data/audio_manifest.json` | ❌ pending |
+| `unity/Assets/Art/Models/tree_full.glb` | ❌ pending Blender session |
+| Audio tracks (4 × WAV, 48 kHz stereo, identical length) | ❌ pending |
+| `tools/render_latent_audio.py` — RAVE offline decode driver | ❌ pending |
+| TestFlight placeholder build submitted | ❌ pending |
+
+See SPEC.md §17 for full acceptance criteria per milestone.
 
 ---
 
