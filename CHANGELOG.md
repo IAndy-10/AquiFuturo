@@ -7,6 +7,7 @@ Format: `<type>: <description>` — one line per milestone entry.
 
 ## Unreleased
 
+- fix: M1 audio silence — add startImmediatelyForTesting flag to AudioSettingsConfig + TrackMixer; fix PoseAnalyzer null-config LPF fail-open
 - feat: add tools/skeletonize.py — first iteration of mesh-to-root_graph.json pipeline (SPEC §6.4 / §5.1); Polyscope --viz flag; initial root_graph.json and branch_graph.json outputs
 - chore: M0 — repo structure, CLAUDE.md, .gitignore, .gitattributes, docs stubs, validate_assets.py
 - feat: blender-native skeleton extraction via MCP — boundary-ring method for skel_roots_main (545 nodes, 543 edges), geodesic shell + KDTree clustering for skel_branches (267 nodes, 266 edges); both placed in Skeletons collection

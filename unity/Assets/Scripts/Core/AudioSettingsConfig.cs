@@ -51,6 +51,10 @@ namespace AquiFuturo.Core
         [Tooltip("DSP scheduling margin in seconds (SPEC §9.2). Never set below 0.1.")]
         public double scheduleMarginSeconds = 0.2;
 
+        [Tooltip("M1 testing only — start all four tracks immediately on app launch without requiring placement. " +
+                 "Set to false before M3 audio tuning.")]
+        public bool startImmediatelyForTesting = false;
+
         [Tooltip("Gain in dB during Adjusting state so the mix 'arrives' on confirm.")]
         public float adjustingGainDb = -12f;
 

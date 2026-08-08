@@ -32,6 +32,15 @@ namespace AquiFuturo.Audio
                 Debug.LogError("[TrackMixer] Exactly 4 TrackChannel references required (SPEC §9.1).");
         }
 
+        private void Start()
+        {
+            if (_audioConfig != null && _audioConfig.startImmediatelyForTesting)
+            {
+                Debug.Log("[TrackMixer] startImmediatelyForTesting enabled — starting audio now (M1 test mode).");
+                StartScheduled();
+            }
+        }
+
         private void OnEnable()
         {
             if (_gameManager != null)

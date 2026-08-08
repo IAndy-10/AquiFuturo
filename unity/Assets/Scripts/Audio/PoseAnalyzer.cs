@@ -124,7 +124,8 @@ namespace AquiFuturo.Audio
 
         private float ComputeAttention(float align)
         {
-            if (_config == null) return 0f;
+            // Fail open (1 = fully open LPF) so audio is audible if config is not wired.
+            if (_config == null) return 1f;
             float t = Mathf.InverseLerp(_config.attentionLow, _config.attentionHigh, align);
             return Mathf.Clamp01(t);
         }
