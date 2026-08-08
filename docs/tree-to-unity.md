@@ -31,7 +31,7 @@ RootInteraction       — touch → raycast → SpatialHash.NearestTo() → node
       └─▶ ParticleSpawner        burst at hit point and normal
 ```
 
-All tunables (tube sides, material) live in `RootMeshConfig` (a ScriptableObject).
+All tunables (tube sides, scale, material) live in `RootMeshConfig` (a ScriptableObject).
 No magic numbers in any runtime method.
 
 ---
@@ -133,11 +133,11 @@ only cells within one cell radius of the query point — no linear scan over all
 Called once by `TreePlacement.InstantiateTree()` immediately after the tree is placed.
 Builds a combined procedural mesh and attaches it to the tree instance's transform.
 
-### Origin alignment
+### Origin alignment and scale
 
 The `trunk_base` node is the natural attachment point — it is the shallowest node in
 the graph, sitting just below the soil surface. Its position is subtracted from all node
-positions before building the mesh:
+positions before building the mesh, then the `scaleMultiplier` is applied:
 
 ```csharp
 foreach (RootNode node in graph.Nodes)
@@ -147,14 +147,20 @@ foreach (RootNode node in graph.Nodes)
         originOffset = node.Position;
 }
 
-// Per edge:
-Vector3 localStart = startPos - originOffset;
-Vector3 localEnd   = endPos   - originOffset;
+// Per edge — shift to local origin then scale:
+Vector3 localStart = (startPos - originOffset) * scale;
+Vector3 localEnd   = (endPos   - originOffset) * scale;
+```
+
+Radii are also multiplied by `scale` so the tubes stay proportional at any size:
+```csharp
+Mesh tube = CreateTubeMesh(localStart, localEnd, sr * scale, er * scale, sides);
 ```
 
 This means when `RootMeshBuilder` is parented to the placed tree at `localPosition =
 Vector3.zero`, the trunk_base node aligns exactly with the AR tap point on the ground.
-The root system hangs underground from there.
+The root system hangs underground from there. Default scale is `1.0` (real-world metres
+from the scan — ~3.6 m wide, ~4.3 m deep).
 
 ### Tube geometry
 
@@ -300,14 +306,18 @@ SessionLogger.Instance?.LogRootTouch(node.Id, node.Class,
 
 ScriptableObject holding visual tunables for the root mesh.
 
-| Field | Default | Purpose |
-|---|---|---|
-| `tubeSides` | 6 | Polygon sides per cross-section (3–12) |
-| `rootMaterial` | null | Material applied to combined mesh; Unity default if null |
+| Field | Default | Range | Purpose |
+|---|---|---|---|
+| `tubeSides` | 6 | 3–12 | Polygon sides per cross-section |
+| `scaleMultiplier` | 1.0 | 0.01–5 | Uniform scale applied at build time |
+| `rootMaterial` | null | — | Material applied to combined mesh; Unity default if null |
 
 `tubeSides` is the primary performance/quality trade-off. At 6, roots look faceted but
-render cheaply. At 12 they read as round on device. Adjust by eye in the Inspector
-without recompiling.
+render cheaply. At 12 they read as round on device.
+
+`scaleMultiplier` rescales the entire mesh relative to the real scan data. Change it in
+`RootMeshSettings.asset` and re-enter Play mode — the mesh rebuilds on the next
+`BuildMesh()` call. For indoor testing, `0.3` brings the ~4 m system to roughly 1.2 m.
 
 ---
 
@@ -389,8 +399,6 @@ rendered as procedural tube geometry. The mesh is interactive via the existing
 
 ---
 
----
-
 ### v2 — `6700abc` — Unity scene wiring
 
 **Commit:** `chore: wire RootMeshBuilder and RootInteraction in Unity scene`
@@ -405,6 +413,46 @@ Editor and ready for Play Mode testing.
 - Created `Settings/RootMeshSettings.asset` from `RootMeshConfig` ScriptableObject
 - Wired all six Inspector references (see Unity wiring table above)
 - `Audio Pool` and `Particle Spawner` left unwired — those systems not yet in scene
+
+---
+
+### v3 — `e252302` — Scale multiplier
+
+**Commit:** `feat: add scaleMultiplier to RootMeshConfig for root mesh size control`
+
+Added `scaleMultiplier` to `RootMeshConfig` and applied it to both node positions and
+radii at build time. Exposes an Inspector-editable `[0.01, 5]` range slider in
+`RootMeshSettings.asset`. Default `1.0` = real scan metres. For indoor preview, `0.3`
+brings the ~4 m system to a manageable 1.2 m.
+
+---
+
+### v4 — `fbf72d9` + `a7141eb` — Editor preview (buildOnStart)
+
+**Commits:**
+- `feat: add buildOnStart test flag to RootMeshBuilder`
+- `fix: wait one frame in buildOnStart to ensure RootGraphLoader is ready`
+
+Added `_buildOnStart` Inspector toggle on `RootMeshBuilder`. When checked, the mesh
+builds automatically in `Start()` without requiring AR placement — allows geometry
+inspection directly in the Unity Editor Scene view.
+
+The initial implementation called `BuildMesh()` synchronously in `Start()`, but
+`RootGraphLoader` also initialises in `Start()` and may run after `RootMeshBuilder`.
+Fixed by converting `Start()` to a coroutine that yields one frame before calling
+`BuildMesh()`, guaranteeing the graph is loaded:
+
+```csharp
+private System.Collections.IEnumerator Start()
+{
+    if (!_buildOnStart) yield break;
+    yield return null;   // wait one frame for RootGraphLoader.Start() to complete
+    BuildMesh(transform);
+}
+```
+
+**Disable `buildOnStart` before field sessions** — mirrors `startImmediatelyForTesting`
+in the audio system. Both are editor-only debug flags that bypass the normal flow.
 
 ---
 
