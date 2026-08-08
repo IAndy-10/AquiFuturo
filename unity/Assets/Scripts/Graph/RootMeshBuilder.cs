@@ -22,10 +22,14 @@ namespace AquiFuturo.Graph
 
         private GameObject _meshRoot;
 
-        private void Start()
+        private System.Collections.IEnumerator Start()
         {
-            if (_buildOnStart)
-                BuildMesh(transform);
+            if (!_buildOnStart) yield break;
+
+            // Wait one frame so RootGraphLoader.Start() has run first.
+            yield return null;
+
+            BuildMesh(transform);
         }
 
         // ── Public API ────────────────────────────────────────────────────
