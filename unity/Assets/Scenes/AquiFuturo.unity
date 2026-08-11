@@ -462,17 +462,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 329887032891890757, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1641268177244792003, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 1641268177244792003, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 1641268177244792003, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 2129397895175372409, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_Name
@@ -480,19 +484,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2129397895175372409, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4304074409599184231, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_LocalScale.x
-      value: 100
+      value: 145
       objectReference: {fileID: 0}
     - target: {fileID: 4304074409599184231, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_LocalScale.y
-      value: 100
+      value: 145
       objectReference: {fileID: 0}
     - target: {fileID: 4304074409599184231, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_LocalScale.z
-      value: 100
+      value: 145
       objectReference: {fileID: 0}
     - target: {fileID: 4304074409599184231, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_LocalPosition.x
@@ -656,7 +660,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3096058805548183119, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
       propertyPath: m_LocalPosition.x
