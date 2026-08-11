@@ -1,6 +1,6 @@
 # AquiFuturo AR — Project Status
 
-**Date:** 2026-08-07
+**Date:** 2026-08-08
 **Branch:** `feat/audio-unity-test`
 **Spec version:** v1.1
 
@@ -11,7 +11,7 @@
 | ID | Milestone | Status | Blocker |
 |---|---|---|---|
 | M0 | Repo + contracts | done | — |
-| M1 | Placeholder AR end-to-end on device | **in progress** | Audio wiring unverified (TrackMixer Inspector fields); placement confirmed on device |
+| M1 | Placeholder AR end-to-end on device | **in progress** | Audio wiring unverified (TrackMixer Inspector fields); placement + root mesh confirmed on device |
 | M2 | Real tree assets | partial | `tree_full.glb` pending Blender session |
 | M3 | Audio complete | not started | depends on M1 + M2 |
 | M4 | Interaction + polish | not started | depends on M3 |
@@ -54,6 +54,13 @@ Acceptance: placeholder cylinder placeable in AR on device, anchored, four place
 | `TreeInstance` prefab wired (`GameManager`, `TreePlacement`, `TrackMixer`, `RootGraphLoader`) | **unverified** | Unity Inspector |
 | Four placeholder AudioClips playing via `PlayScheduled()` | **unverified** — TrackMixer Inspector fields need check | Unity Inspector |
 | LPF + pan responding to phone orientation (pose axes live) | **unverified** — depends on audio step above | — |
+| `RootMeshBuilder` + `RootMeshConfig` scripts added; procedural tube mesh from skeleton | **done** | — |
+| `StreamingAssets/root_graph.json` (real scan data, schema 1.1, 545 nodes, 543 edges) | **done** | — |
+| `RootMesh` layer (User Layer 3) added to TagManager | **done** | — |
+| `Graph` GameObject with `RootGraphLoader` wired in scene | **done** | — |
+| `Interaction` GameObject with `RootInteraction` wired (`_graph`, `_bootstrap`) | **done** — AudioPool + ParticleSpawner unwired | Unity Inspector |
+| `RootMeshSettings.asset` (`RootMeshConfig` ScriptableObject) created | **done** | — |
+| `TreePlacement` → `RootMeshBuilder` wired; Build/Clear called at placement/reset | **done** | — |
 | `data/audio_manifest.json` authored | **pending** | [CC] |
 | TestFlight placeholder build submitted (Apple review cleared early) | **pending** | [ME] |
 
@@ -67,8 +74,8 @@ Acceptance: placeholder cylinder placeable in AR on device, anchored, four place
 
 | Item | State | Owner |
 |---|---|---|
-| `data/root_graph.json` (schema v1.1, Unity Y-up, TSP tour) | done | [CC]+[BL] |
-| `data/branch_graph.json` (schema v1.1, Unity Y-up, TSP tour) | done | [CC]+[BL] |
+| `data/root_graph.json` (schema v1.1, Unity Y-up, TSP tour) | **done** | [CC]+[BL] |
+| `data/branch_graph.json` (schema v1.1, Unity Y-up, TSP tour) | **done** | [CC]+[BL] |
 | `unity/Assets/Art/Models/tree_full.glb` (`Trunk`, `Branches`, `Roots` children, ≤60k tris) | **pending** | Blender MCP session |
 | GLB validated: correct Y-up orientation, no transform correction needed in Unity | **pending** | [BL]+[UN] |
 | `unity/Assets/Audio/` — 4 tracks × 48 kHz stereo WAV, identical sample length | **pending** | [ME] |
@@ -93,16 +100,18 @@ Depends on: M1 (scene running on device), M2 (final tracks + GLB).
 
 ---
 
-## M4 — Interaction + polish (not started)
+## M4 — Interaction + polish (partial — groundwork done ahead of schedule)
 
 Depends on: M3.
 
 | Item | State |
 |---|---|
-| Touch raycast against `RootMesh` layer → nearest node via `SpatialHash` | pending |
+| `RootMesh` layer + `RootMeshBuilder` producing collider mesh from skeleton | **done** (landed in M1 branch) |
+| `RootInteraction` in scene, wired to `_graph` + `_bootstrap` | **done** — raycast logic present; AudioPool + ParticleSpawner unwired |
+| Touch raycast against `RootMesh` layer → nearest node via `SpatialHash` | **partial** — `RootInteraction` + layer in place; end-to-end not verified on device |
 | Interaction one-shot samples (3–5 variants per node class, 48 kHz mono) | pending |
-| `InteractionAudioPool` (12 sources, max 6 concurrent, steal oldest) | pending |
-| Particle burst at hit point, normal-aligned (`ParticleSpawner`) | pending |
+| `InteractionAudioPool` (12 sources, max 6 concurrent, steal oldest) | pending — not wired in scene |
+| Particle burst at hit point, normal-aligned (`ParticleSpawner`) | pending — not wired in scene |
 | Root fade shader (opacity 1.0 at deepest node → 0.25 near y=0) | pending |
 | HUD — scan prompt, reticle, confirm button, reset affordance | pending |
 | Tracking-loss UI ("Move back toward the tree") | pending |
@@ -147,7 +156,8 @@ Depends on: M5.
 | `tools/render_latent_audio.py` not written — RAVE offline decode | §6.5 | high — needed for M2 audio |
 | No ADRs written in `docs/decisions/` — spatialiser removal is the first one due | §9.6 | medium |
 | `PlacementReticle` script not found in Scripts/ — may be a Unity-side prefab concern | §8.1 | medium — clarify before M1 scene assembly |
-| `unity/Assets/Data/` (StreamingAssets copies of data/*.json) — needs Unity MCP wiring | §14.1 | medium — needed for `RootGraphLoader` at runtime |
+| `unity/Assets/StreamingAssets/root_graph.json` added — `RootGraphLoader` runtime path now satisfied | §14.1 | resolved |
+| `InteractionAudioPool` + `ParticleSpawner` not yet in scene — `RootInteraction` unwired for audio/particles | §9.4, §11 | high — needed for M4 |
 
 ---
 

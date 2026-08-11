@@ -130,6 +130,10 @@ namespace AquiFuturo.Graph
             if (_config != null && _config.rootMaterial != null)
                 mr.sharedMaterial = _config.rootMaterial;
 
+            // Visual comes from the FBX prefab (Terra/Voltaic aesthetic).
+            // This procedural mesh is collision-only — keep it invisible.
+            mr.enabled = false;
+
             Debug.Log($"[RootMeshBuilder] Built root mesh: {graph.Edges.Count} edges, " +
                       $"{combined.vertexCount} vertices. Origin offset = {originOffset}.");
         }

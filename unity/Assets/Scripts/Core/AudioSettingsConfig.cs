@@ -23,10 +23,8 @@ namespace AquiFuturo.Core
         public float attentionHigh = 0.85f;
 
         [Header("Smooth Times (seconds)")]
-        public float azimuthSmoothTime  = 0.20f;
-        public float alignmentSmoothTime = 0.35f;
-        public float tiltSmoothTime      = 0.30f;
-        public float distanceSmoothTime  = 0.50f;
+        public float SmoothTime  = 0.50f;
+
 
         [Header("Tilt Gain")]
         [Tooltip("Maximum dB lift or cut from tilt modulation (SPEC §9.3 Mapping 3).")]

@@ -50,16 +50,11 @@ namespace AquiFuturo.Audio
 
             ComputeRawAxes(out float rawAz, out float rawAlign, out float rawTilt, out float rawDist);
 
-            float smooth = _config != null ? _config.azimuthSmoothTime   : 0.2f;
+            float smooth = _config != null ? _config.SmoothTime   : 0.5f;
+            
             Azimuth   = Mathf.SmoothDamp(Azimuth,   rawAz,    ref _azimuthVel,   smooth);
-
-            smooth = _config != null ? _config.alignmentSmoothTime : 0.35f;
             Alignment = Mathf.SmoothDamp(Alignment, rawAlign, ref _alignmentVel, smooth);
-
-            smooth = _config != null ? _config.tiltSmoothTime : 0.3f;
             Tilt      = Mathf.SmoothDamp(Tilt,      rawTilt,  ref _tiltVel,      smooth);
-
-            smooth = _config != null ? _config.distanceSmoothTime : 0.5f;
             Distance  = Mathf.SmoothDamp(Distance,  rawDist,  ref _distanceVel,  smooth);
 
             Attention = ComputeAttention(Alignment);
