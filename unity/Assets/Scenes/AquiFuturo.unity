@@ -394,6 +394,16 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!4 &125836684 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8902262351605926508, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+  m_PrefabInstance: {fileID: 532329090}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &208422602 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+  m_PrefabInstance: {fileID: 618113240}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &350163784
 GameObject:
   m_ObjectHideFlags: 0
@@ -436,14 +446,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 350163784}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 909232850}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!1001 &532329090
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -464,6 +474,38 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2129397895175372409, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+      propertyPath: m_Name
+      value: AquiFuturo_RootA
+      objectReference: {fileID: 0}
+    - target: {fileID: 2129397895175372409, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4304074409599184231, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 4304074409599184231, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 4304074409599184231, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 4304074409599184231, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4304074409599184231, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4304074409599184231, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4335060115229351020, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_Name
       value: AquiFuturo_Tree_Terra
@@ -478,15 +520,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8902262351605926508, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_LocalScale.x
-      value: 100
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8902262351605926508, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_LocalScale.y
-      value: 100
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8902262351605926508, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_LocalScale.z
-      value: 100
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8902262351605926508, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
       propertyPath: m_LocalPosition.x
@@ -530,9 +572,113 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 8902262351605926508, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+      insertIndex: 1
+      addedObject: {fileID: 208422602}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ba195dcd32b704a3787b8b0a571a1d3a, type: 3}
+--- !u!1001 &618113240
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 125836684}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -3
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1173587930398517836, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1173587930398517836, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -1173587930398517836, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_Name
+      value: AquiFuturo_RootA2
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3096058805548183119, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3096058805548183119, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 200
+      objectReference: {fileID: 0}
+    - target: {fileID: 3096058805548183119, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4950579047942688976, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: a4b1491da01c34e6cb5350c606de3464, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
 --- !u!1 &819137716
 GameObject:
   m_ObjectHideFlags: 0
@@ -1417,7 +1563,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AquiFuturo.Graph.RootMeshBuilder
   _config: {fileID: 11400000, guid: 9f49f3700e95e4dec87c5ce53f1bbc1e, type: 2}
   _graphLoader: {fileID: 2101666890}
-  _buildOnStart: 1
+  _buildOnStart: 0
 --- !u!1 &1306046745
 GameObject:
   m_ObjectHideFlags: 0

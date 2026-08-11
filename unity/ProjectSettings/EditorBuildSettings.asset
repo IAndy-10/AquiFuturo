@@ -6,8 +6,11 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/AquiFuturo.unity
+    path: Assets/Scenes/AquiFuturo.unity
     guid: 42a78e9cc7e8a4f7284e24646bd4345b
+  - enabled: 0
+    path: Assets/Scenes/TestScene.unity
+    guid: 4dde863b251684cd19075b19aebb13b4
   m_configObjects:
     UnityEditor.XR.ARKit.ARKitSettings: {fileID: 11400000, guid: 33a3aea27ae734dff8b294171b962d48, type: 2}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: b2ed6653ed3cc4510a85ee66993f6aa6, type: 2}
