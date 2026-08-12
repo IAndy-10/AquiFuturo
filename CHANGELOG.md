@@ -7,6 +7,10 @@ Format: `<type>: <description>` — one line per milestone entry.
 
 ## Unreleased
 
+- docs: M1 complete — placeholder AR placement, four test tracks sample-synced, LPF + pan responding to phone movement confirmed on device
+- docs: update M2 status — roots FBX only in Unity; branch_graph.json used for geometry/audio extraction only, no Unity model needed; M2 complete
+- docs: clarify Unity workflow — C# scripts managed by Claude Code, scene assembly done manually in Unity Editor (no Unity MCP)
+
 - feat: Unity FBX import — AquiFuturo_RootA/Trunk FBX assets, URP pipeline, ARLightEstimation (ambient + directional), TestScene for scale validation, scenes relocated to Assets/Scenes/
 - feat: per-track modulation — TrackChannel gains IsStatic/LpfSensitivity/PanWidth; drone static, three tracks modulated independently; fix tilt mapping sign
 - fix: M1 audio silence — add startImmediatelyForTesting flag to AudioSettingsConfig + TrackMixer; fix PoseAnalyzer null-config LPF fail-open
