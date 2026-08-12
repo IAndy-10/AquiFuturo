@@ -109,6 +109,9 @@ xcode_build/Frameworks/
 xcode_build/Classes/
 xcode_build/Il2CppOutputProject/
 xcode_build/Il2CppTempDirArtifacts/
+xcode_build/Libraries/
+xcode_build/unity_BurstDebugInformation_DoNotShip/
+xcode_build/Unity-iPhone.xcodeproj/project.pbxproj
 
 # ============================================================
 # Raw audio source files (assets_src/ — not shipped, stored locally)
