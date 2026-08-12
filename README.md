@@ -121,7 +121,7 @@ main  ←  dev  ←  feat/<short-name>
 |---|---|---|
 | M0 | ✅ done | Repo + contracts, validator, CLAUDE.md, all 19 C# scripts imported by Unity |
 | M1 | 🔄 in progress | Placeholder AR end-to-end on device, four tracks sample-synced — **blocked on Unity MCP scene assembly (Session C1)** |
-| M2 | 🔄 in progress | Real tree assets — `root_graph.json` + `branch_graph.json` produced ✅; `tree_full.glb` pending Blender session |
+| M2 | ✅ done | Real tree assets — `root_graph.json` + `branch_graph.json` produced ✅; roots FBX imported ✅ (branches used for geometry/audio extraction only, no Unity model needed) |
 | M3 | ⬜ | Audio complete: four final tracks, all pose mappings, outdoor mix tuning |
 | M4 | ⬜ | Interaction + polish: raycast, particles, root fade, HUD, reset |
 | M5 | ⬜ | Instrumentation + hardening: SessionLogger CSV, 20-min soak |
@@ -141,7 +141,7 @@ main  ←  dev  ←  feat/<short-name>
 | Unity project open, packages installed, scripts imported (.meta files present) | ✅ |
 | Unity scene assembled (Session C1) | ❌ pending |
 | `data/audio_manifest.json` | ❌ pending |
-| `unity/Assets/Art/Models/tree_full.glb` | ❌ pending Blender session |
+| Roots FBX (`AquiFuturo_RootA`) imported into Unity | ✅ |
 | Audio tracks (4 × WAV, 48 kHz stereo, identical length) | ❌ pending |
 | `tools/render_latent_audio.py` — RAVE offline decode driver | ❌ pending |
 | TestFlight placeholder build submitted | ❌ pending |
