@@ -120,7 +120,7 @@ main  ←  dev  ←  feat/<short-name>
 | ID | Status | Description |
 |---|---|---|
 | M0 | ✅ done | Repo + contracts, validator, CLAUDE.md, all 19 C# scripts imported by Unity |
-| M1 | 🔄 in progress | Placeholder AR end-to-end on device, four tracks sample-synced — **blocked on Unity scene assembly (manual, guided by Claude Code)** |
+| M1 | ✅ done | Placeholder cylinder placeable in AR, anchored, four placeholder tracks sample-synced with working LPF and pan responding to phone movement |
 | M2 | ✅ done | Real tree assets — `root_graph.json` + `branch_graph.json` produced ✅; roots FBX imported ✅ (branches used for geometry/audio extraction only, no Unity model needed) |
 | M3 | ⬜ | Audio complete: four final tracks, all pose mappings, outdoor mix tuning |
 | M4 | ⬜ | Interaction + polish: raycast, particles, root fade, HUD, reset |
