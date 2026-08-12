@@ -134,6 +134,9 @@ namespace AquiFuturo.Graph
             // This procedural mesh is collision-only — keep it invisible.
             mr.enabled = false;
 
+            // Rebuild spatial hash in world space so RootInteraction hit points resolve correctly.
+            _graphLoader.RebuildSpatialHashInWorldSpace(treeRoot, scale, originOffset);
+
             Debug.Log($"[RootMeshBuilder] Built root mesh: {graph.Edges.Count} edges, " +
                       $"{combined.vertexCount} vertices. Origin offset = {originOffset}.");
         }

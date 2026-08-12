@@ -15,10 +15,12 @@ namespace AquiFuturo.Graph
         [SerializeField] private string _graphFileName = "root_graph.json";
         [SerializeField] private AquiFuturo.Core.InteractionSettingsConfig _interactionConfig;
 
-        public RootGraph Graph      { get; private set; }
+        public RootGraph   Graph       { get; private set; }
         public SpatialHash SpatialHash { get; private set; }
 
         public bool IsLoaded => Graph != null;
+
+        private float _cellSize = 0.25f;
 
         private void Start()
         {
@@ -42,16 +44,41 @@ namespace AquiFuturo.Graph
             }
 
             // SPEC §10: spatial hash must be built in Start(), not on first touch.
-            float cellSize = _interactionConfig != null
+            _cellSize = _interactionConfig != null
                 ? _interactionConfig.spatialHashCellSize
                 : 0.25f;
 
-            SpatialHash = new SpatialHash(cellSize);
+            SpatialHash = new SpatialHash(_cellSize);
             foreach (var node in Graph.Nodes)
                 SpatialHash.Insert(node);
 
             Debug.Log($"[RootGraphLoader] Loaded graph '{Graph.TreeId}' " +
                       $"with {Graph.Nodes.Count} nodes, {Graph.Edges.Count} edges.");
+        }
+
+        // ── Public API ────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Rebuilds the spatial hash using world-space node positions so that
+        /// RootInteraction can pass Physics.Raycast hit points directly to NearestTo().
+        /// Called by RootMeshBuilder after the collision mesh is parented to treeRoot.
+        /// </summary>
+        public void RebuildSpatialHashInWorldSpace(
+            Transform treeRoot, float scaleMultiplier, Vector3 originOffset)
+        {
+            if (Graph == null) return;
+
+            var hash = new SpatialHash(_cellSize);
+            foreach (RootNode node in Graph.Nodes)
+            {
+                Vector3 local = (node.Position - originOffset) * scaleMultiplier;
+                Vector3 world = treeRoot.TransformPoint(local);
+                hash.Insert(node, world);
+            }
+
+            SpatialHash = hash;
+            Debug.Log($"[RootGraphLoader] Spatial hash rebuilt in world space " +
+                      $"(treeRoot={treeRoot.position}, scale={scaleMultiplier}).");
         }
 
         // ── Private parsing ───────────────────────────────────────────────

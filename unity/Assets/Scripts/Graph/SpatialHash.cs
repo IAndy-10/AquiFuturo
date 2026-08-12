@@ -20,10 +20,19 @@ namespace AquiFuturo.Graph
             _cells       = new Dictionary<long, List<RootNode>>();
         }
 
-        /// <summary>Inserts a node into the hash at its world position.</summary>
+        /// <summary>Inserts a node into the hash at its graph-space position.</summary>
         public void Insert(RootNode node)
         {
-            long key = CellKey(node.Position);
+            Insert(node, node.Position);
+        }
+
+        /// <summary>
+        /// Inserts a node into the hash at an explicit position (e.g. world space).
+        /// Use this overload when the lookup space differs from node.Position.
+        /// </summary>
+        public void Insert(RootNode node, Vector3 atPosition)
+        {
+            long key = CellKey(atPosition);
             if (!_cells.TryGetValue(key, out var list))
             {
                 list = new List<RootNode>(4);
