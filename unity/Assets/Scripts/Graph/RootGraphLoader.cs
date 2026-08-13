@@ -22,6 +22,10 @@ namespace AquiFuturo.Graph
 
         private float _cellSize = 0.25f;
 
+        // Cached transform for world→graph-space back-projection in NearestNodeTo.
+        private Transform _treeTransform;
+        private float     _hashScaleMultiplier = 1f;
+
         private void Start()
         {
             string path = Path.Combine(Application.streamingAssetsPath, _graphFileName);
@@ -59,26 +63,54 @@ namespace AquiFuturo.Graph
         // ── Public API ────────────────────────────────────────────────────
 
         /// <summary>
-        /// Rebuilds the spatial hash using world-space node positions so that
-        /// RootInteraction can pass Physics.Raycast hit points directly to NearestTo().
-        /// Called by RootMeshBuilder after the collision mesh is parented to treeRoot.
+        /// Rebuilds the spatial hash in graph space and caches the tree transform so that
+        /// <see cref="NearestNodeTo"/> can back-project world hit points into graph space.
+        /// Called by RootMeshBuilder after the FBX tree is placed.
+        /// scaleMultiplier should be 1.0 when FBX graph and FBX mesh share the same metre scale.
         /// </summary>
         public void RebuildSpatialHashInWorldSpace(
             Transform treeRoot, float scaleMultiplier, Vector3 originOffset)
         {
             if (Graph == null) return;
 
+            _treeTransform       = treeRoot;
+            _hashScaleMultiplier = scaleMultiplier > 0f ? scaleMultiplier : 1f;
+
+            // Hash stays in graph space — queries are back-projected by NearestNodeTo().
             var hash = new SpatialHash(_cellSize);
             foreach (RootNode node in Graph.Nodes)
-            {
-                Vector3 local = (node.Position - originOffset) * scaleMultiplier;
-                Vector3 world = treeRoot.TransformPoint(local);
-                hash.Insert(node, world);
-            }
+                hash.Insert(node);
 
             SpatialHash = hash;
-            Debug.Log($"[RootGraphLoader] Spatial hash rebuilt in world space " +
-                      $"(treeRoot={treeRoot.position}, scale={scaleMultiplier}).");
+
+            // Debug: log trunk_base world position to verify alignment with hit points.
+            foreach (RootNode node in Graph.Nodes)
+            {
+                if (node.Class == "trunk_base")
+                {
+                    Vector3 dbgWorld = treeRoot.TransformPoint(node.Position * _hashScaleMultiplier);
+                    Debug.Log($"[RootGraphLoader] trunk_base world={dbgWorld} graph={node.Position} scale={_hashScaleMultiplier}");
+                    break;
+                }
+            }
+
+            Debug.Log($"[RootGraphLoader] Spatial hash rebuilt in graph space " +
+                      $"(treeRoot={treeRoot.position} scale={_hashScaleMultiplier}).");
+        }
+
+        /// <summary>
+        /// Returns the graph node nearest to <paramref name="worldPoint"/> by back-projecting
+        /// the world-space hit point into graph space before querying the spatial hash.
+        /// Use this instead of <c>SpatialHash.NearestTo</c> in <c>RootInteraction</c>.
+        /// </summary>
+        public RootNode NearestNodeTo(Vector3 worldPoint)
+        {
+            if (SpatialHash == null || _treeTransform == null) return null;
+
+            // Inverse of: world = treeRoot.TransformPoint(graphPos * scale)
+            // → graphPos = treeRoot.InverseTransformPoint(world) / scale
+            Vector3 graphPoint = _treeTransform.InverseTransformPoint(worldPoint) / _hashScaleMultiplier;
+            return SpatialHash.NearestTo(graphPoint);
         }
 
         // ── Private parsing ───────────────────────────────────────────────

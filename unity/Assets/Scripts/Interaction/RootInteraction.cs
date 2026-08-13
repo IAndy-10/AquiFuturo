@@ -59,13 +59,33 @@ namespace AquiFuturo.Interaction
             float maxDist = _config != null ? _config.raycastDistanceM : 10f;
             Ray ray = _arCamera.ScreenPointToRay(screenPos);
 
+            Debug.Log($"[RootInteraction] Touch {screenPos} layerMask={_rootMeshLayerMask} maxDist={maxDist}");
+
+            // Debug: cast against ALL layers to find what (if anything) is in the way.
+            if (Physics.Raycast(ray, out RaycastHit debugHit, maxDist))
+                Debug.Log($"[RootInteraction] AllLayers hit '{debugHit.collider.gameObject.name}' " +
+                          $"layer={debugHit.collider.gameObject.layer} at {debugHit.point}");
+            else
+                Debug.Log("[RootInteraction] AllLayers raycast hit nothing — no colliders in ray path.");
+
             if (!Physics.Raycast(ray, out RaycastHit hit, maxDist, _rootMeshLayerMask))
+            {
+                Debug.Log("[RootInteraction] Raycast missed — no RootMesh collider hit.");
                 return;
+            }
+
+            Debug.Log($"[RootInteraction] Hit '{hit.collider.gameObject.name}' at {hit.point}");
 
             if (_graphLoader == null || !_graphLoader.IsLoaded) return;
 
-            RootNode node = _graphLoader.SpatialHash.NearestTo(hit.point);
-            if (node == null) return;
+            RootNode node = _graphLoader.NearestNodeTo(hit.point);
+            if (node == null)
+            {
+                Debug.Log("[RootInteraction] NearestNodeTo returned null — no nearby node.");
+                return;
+            }
+
+            Debug.Log($"[RootInteraction] Node id={node.Id} class={node.Class}");
 
             // Debounce per node (SPEC §10).
             float debounceSeconds = _config != null ? _config.debounceMs / 1000f : 0.12f;

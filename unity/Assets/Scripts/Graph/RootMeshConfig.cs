@@ -8,7 +8,7 @@ namespace AquiFuturo.Graph
     {
         [Tooltip("Uniform scale applied to graph-space node positions when rebuilding the spatial hash. " +
                  "Match this to the scale set on the FBX root in the prefab.")]
-        [Range(0.01f, 200f)]
-        public float scaleMultiplier = 145.07f;
+        [Range(0.001f, 200f)]
+        public float scaleMultiplier = 1f;
     }
 }

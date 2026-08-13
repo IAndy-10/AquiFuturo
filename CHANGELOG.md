@@ -7,6 +7,7 @@ Format: `<type>: <description>` — one line per milestone entry.
 
 ## Unreleased
 
+- fix: spatial hash coordinate mismatch — RootGraphLoader stores hash in graph space, NearestNodeTo() back-projects world hit point via InverseTransformPoint; RootInteraction calls NearestNodeTo() instead of SpatialHash.NearestTo()
 - refactor: gut RootMeshBuilder — remove procedural tube mesh; collision now on FBX MeshCollider; RootMeshBuilder only rebuilds spatial hash in world space
 - feat: Unity FBX import — AquiFuturo_RootA/Trunk FBX assets, URP pipeline, ARLightEstimation (ambient + directional), TestScene for scale validation, scenes relocated to Assets/Scenes/
 - feat: per-track modulation — TrackChannel gains IsStatic/LpfSensitivity/PanWidth; drone static, three tracks modulated independently; fix tilt mapping sign

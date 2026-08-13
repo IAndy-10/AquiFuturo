@@ -30,7 +30,8 @@ namespace AquiFuturo.Graph
 
         /// <summary>
         /// Rebuilds the spatial hash in world space so RootInteraction hit points resolve correctly.
-        /// The trunk_base node is treated as the local origin.
+        /// Graph node positions are in the same metre-scale coordinate space as the FBX vertices.
+        /// scaleMultiplier should be 1.0 for FBX-based placement (set in RootMeshSettings asset).
         /// </summary>
         public void BuildMesh(Transform treeRoot)
         {
@@ -44,20 +45,10 @@ namespace AquiFuturo.Graph
             RootGraph graph = _graphLoader.Graph;
             float     scale = _config != null ? _config.scaleMultiplier : 1f;
 
-            Vector3 originOffset = Vector3.zero;
-            foreach (RootNode node in graph.Nodes)
-            {
-                if (node.Class == "trunk_base")
-                {
-                    originOffset = node.Position;
-                    break;
-                }
-            }
+            // originOffset not used — FBX positions are not re-centred at treeRoot.
+            _graphLoader.RebuildSpatialHashInWorldSpace(treeRoot, scale, Vector3.zero);
 
-            _graphLoader.RebuildSpatialHashInWorldSpace(treeRoot, scale, originOffset);
-
-            Debug.Log($"[RootMeshBuilder] Spatial hash rebuilt: {graph.Nodes.Count} nodes. " +
-                      $"Origin offset = {originOffset}.");
+            Debug.Log($"[RootMeshBuilder] Spatial hash rebuilt: {graph.Nodes.Count} nodes.");
         }
 
         /// <summary>No-op stub — mesh lives on the FBX prefab. Called by TreePlacement on reset.</summary>
