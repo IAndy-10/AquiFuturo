@@ -25,7 +25,7 @@ namespace AquiFuturo.Audio
 
         [Header("Modulation")]
         [Tooltip("When true, this track is static — LPF stays fully open, pan stays centred, " +
-                 "only base gain + tracking-loss mute are applied. Use for the drone/foundation layer.")]
+                 "only base gain + tracking-loss mute are applied")]
         [SerializeField] private bool _isStatic = false;
 
         [Tooltip("How strongly attention drives the LPF on this track. " +

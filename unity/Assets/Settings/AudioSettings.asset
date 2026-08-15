@@ -17,10 +17,7 @@ MonoBehaviour:
   resonanceQ: 1
   attentionLow: 0.2
   attentionHigh: 0.85
-  azimuthSmoothTime: 0.2
-  alignmentSmoothTime: 0.35
-  tiltSmoothTime: 0.3
-  distanceSmoothTime: 0.5
+  SmoothTime: 0.5
   tiltGainRangeDb: 6
   distanceGainDb:
     serializedVersion: 2
@@ -91,7 +88,7 @@ MonoBehaviour:
   gainMinDb: -24
   gainMaxDb: 0
   scheduleMarginSeconds: 0.2
-  startImmediatelyForTesting: 1
+  startImmediatelyForTesting: 0
   adjustingGainDb: -12
   poolSize: 12
   maxConcurrentInteractions: 6

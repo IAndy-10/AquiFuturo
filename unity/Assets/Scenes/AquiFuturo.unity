@@ -612,16 +612,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AquiFuturo.Interaction.InteractionAudioPool
   _config: {fileID: 0}
   _classBanks:
-  - nodeClass: 
-    clips: []
-  - nodeClass: 
-    clips: []
-  - nodeClass: 
-    clips: []
-  - nodeClass: 
-    clips: []
-  - nodeClass: 
-    clips: []
+  - nodeClass: trunk_base
+    clips:
+    - {fileID: 8300000, guid: 7370bc1842ab44c4685920f72a0004a8, type: 3}
+  - nodeClass: primary
+    clips:
+    - {fileID: 8300000, guid: 7370bc1842ab44c4685920f72a0004a8, type: 3}
+  - nodeClass: lateral
+    clips:
+    - {fileID: 8300000, guid: 7370bc1842ab44c4685920f72a0004a8, type: 3}
+  - nodeClass: fine
+    clips:
+    - {fileID: 8300000, guid: 7370bc1842ab44c4685920f72a0004a8, type: 3}
+  - nodeClass: terminal
+    clips:
+    - {fileID: 8300000, guid: 7370bc1842ab44c4685920f72a0004a8, type: 3}
 --- !u!1 &882135181
 GameObject:
   m_ObjectHideFlags: 0

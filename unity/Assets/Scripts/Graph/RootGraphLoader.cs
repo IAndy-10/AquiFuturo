@@ -99,18 +99,65 @@ namespace AquiFuturo.Graph
         }
 
         /// <summary>
+        /// Converts a graph-space node position back to Unity world space.
+        /// Inverse of the world→graph back-projection used in <see cref="NearestNodeTo"/>.
+        /// Returns <c>Vector3.zero</c> if the tree transform is not yet set.
+        /// </summary>
+        public Vector3 NodeWorldPosition(RootNode node)
+        {
+            if (_treeTransform == null) return Vector3.zero;
+            // Inverse of (local.x, local.z, -local.y) → (graph.x, graph.y, graph.z):
+            // graph=(gx,gy,gz) → local=(gx,-gz,gy), then scale and transform.
+            Vector3 local = new Vector3(node.Position.x, -node.Position.z, node.Position.y)
+                            * _hashScaleMultiplier;
+            return _treeTransform.TransformPoint(local);
+        }
+
+        /// <summary>
         /// Returns the graph node nearest to <paramref name="worldPoint"/> by back-projecting
         /// the world-space hit point into graph space before querying the spatial hash.
         /// Use this instead of <c>SpatialHash.NearestTo</c> in <c>RootInteraction</c>.
         /// </summary>
         public RootNode NearestNodeTo(Vector3 worldPoint)
         {
-            if (SpatialHash == null || _treeTransform == null) return null;
+            if (SpatialHash == null)
+            {
+                Debug.LogWarning("[RootGraphLoader] NearestNodeTo: SpatialHash is null.");
+                return null;
+            }
+            if (_treeTransform == null)
+            {
+                Debug.LogWarning("[RootGraphLoader] NearestNodeTo: _treeTransform is null — " +
+                                 "RebuildSpatialHashInWorldSpace was never called. " +
+                                 "Ensure TreePlacement._rootMeshBuilder is wired in Inspector.");
+                return null;
+            }
 
-            // Inverse of: world = treeRoot.TransformPoint(graphPos * scale)
-            // → graphPos = treeRoot.InverseTransformPoint(world) / scale
-            Vector3 graphPoint = _treeTransform.InverseTransformPoint(worldPoint) / _hashScaleMultiplier;
-            return SpatialHash.NearestTo(graphPoint);
+            // FBX is imported with bakeAxisConversion=0 and the prefab overrides the
+            // root rotation to identity, leaving vertices in Blender Z-up local space.
+            // Graph nodes are in Unity Y-up. The conversion is Rot(-90°X): (X,Y,Z)→(X,Z,-Y).
+            Vector3 local = _treeTransform.InverseTransformPoint(worldPoint) / _hashScaleMultiplier;
+            // bakeAxisConversion=0 + identity rotation override: mesh is in Blender Z-up local space.
+            // Graph is in Unity Y-up. Rot(-90°X): (X,Y,Z)→(X,Z,-Y).
+            Vector3 graphPoint = new Vector3(local.x, local.z, -local.y);
+            Debug.Log($"[RootGraphLoader] NearestNodeTo: world={worldPoint} local={local} → graph={graphPoint}");
+
+            RootNode result = SpatialHash.NearestTo(graphPoint);
+            if (result != null) return result;
+
+            // Linear scan fallback — skeleton is sparse (~545 nodes) so this is fast.
+            // Triggered when the hit lands in an empty hash cell (fine root regions).
+            RootNode best   = null;
+            float    bestSq = float.MaxValue;
+            foreach (RootNode node in Graph.Nodes)
+            {
+                float sq = (node.Position - graphPoint).sqrMagnitude;
+                if (sq < bestSq) { bestSq = sq; best = node; }
+            }
+            if (best != null)
+                Debug.Log($"[RootGraphLoader] Hash miss — linear scan found node {best.Id} " +
+                          $"class={best.Class} dist={Mathf.Sqrt(bestSq):F2}m");
+            return best;
         }
 
         // ── Private parsing ───────────────────────────────────────────────

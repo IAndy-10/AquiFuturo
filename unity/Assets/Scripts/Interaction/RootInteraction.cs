@@ -22,8 +22,6 @@ namespace AquiFuturo.Interaction
         [SerializeField] private ParticleSpawner _particleSpawner;
         [SerializeField] private PoseAnalyzer _poseAnalyzer;
 
-        // Layer mask set to RootMesh only — never raycast against Default (SPEC §2.2).
-        private int _rootMeshLayerMask;
         private Camera _arCamera;
 
         // Debounce: tracks last touch time per node id.
@@ -31,13 +29,10 @@ namespace AquiFuturo.Interaction
 
         private void Awake()
         {
-            _rootMeshLayerMask = LayerMask.GetMask("RootMesh");
-            if (_rootMeshLayerMask == 0)
-                Debug.LogWarning("[RootInteraction] 'RootMesh' layer not found. " +
-                                 "Create it in Project Settings → Tags & Layers (SPEC §2.2).");
-
             var arCamMgr = FindObjectOfType<UnityEngine.XR.ARFoundation.ARCameraManager>();
             _arCamera = arCamMgr != null ? arCamMgr.GetComponent<Camera>() : Camera.main;
+            if (_arCamera == null)
+                Debug.LogWarning("[RootInteraction] AR camera not found — touch will not work.");
         }
 
         private void Update()
@@ -54,34 +49,18 @@ namespace AquiFuturo.Interaction
 
         // ── Private ───────────────────────────────────────────────────────
 
-        private void HandleTouch(Vector2 screenPos)
+        private void HandleTouch(Vector2 touchPos)
         {
-            float maxDist = _config != null ? _config.raycastDistanceM : 10f;
-            Ray ray = _arCamera.ScreenPointToRay(screenPos);
-
-            Debug.Log($"[RootInteraction] Touch {screenPos} layerMask={_rootMeshLayerMask} maxDist={maxDist}");
-
-            // Debug: cast against ALL layers to find what (if anything) is in the way.
-            if (Physics.Raycast(ray, out RaycastHit debugHit, maxDist))
-                Debug.Log($"[RootInteraction] AllLayers hit '{debugHit.collider.gameObject.name}' " +
-                          $"layer={debugHit.collider.gameObject.layer} at {debugHit.point}");
-            else
-                Debug.Log("[RootInteraction] AllLayers raycast hit nothing — no colliders in ray path.");
-
-            if (!Physics.Raycast(ray, out RaycastHit hit, maxDist, _rootMeshLayerMask))
-            {
-                Debug.Log("[RootInteraction] Raycast missed — no RootMesh collider hit.");
-                return;
-            }
-
-            Debug.Log($"[RootInteraction] Hit '{hit.collider.gameObject.name}' at {hit.point}");
-
             if (_graphLoader == null || !_graphLoader.IsLoaded) return;
 
-            RootNode node = _graphLoader.NearestNodeTo(hit.point);
+            float radiusPx = _config != null ? _config.screenSpaceTapRadiusPx : 80f;
+
+            Debug.Log($"[RootInteraction] Touch {touchPos} screenRadiusPx={radiusPx}");
+
+            RootNode node = FindNearestNodeInScreen(touchPos, radiusPx);
             if (node == null)
             {
-                Debug.Log("[RootInteraction] NearestNodeTo returned null — no nearby node.");
+                Debug.Log("[RootInteraction] No node within tap radius.");
                 return;
             }
 
@@ -102,9 +81,38 @@ namespace AquiFuturo.Interaction
 
             float pitchVar = _config != null ? _config.pitchVarSemitones : 2f;
             _audioPool?.Play(node.Class, panValue, pitchVar);
-            _particleSpawner?.Burst(hit.point, hit.normal);
+
+            Vector3 nodeWorld = _graphLoader.NodeWorldPosition(node);
+            _particleSpawner?.Burst(nodeWorld, Vector3.up);
             SessionLogger.Instance?.LogRootTouch(node.Id, node.Class,
-                Vector3.Distance(_arCamera.transform.position, hit.point));
+                Vector3.Distance(_arCamera.transform.position, nodeWorld));
+        }
+
+        /// <summary>
+        /// Finds the graph node whose screen-projected position is nearest to
+        /// <paramref name="touchPos"/> within <paramref name="radiusPx"/> pixels.
+        /// No physics colliders required.
+        /// </summary>
+        private RootNode FindNearestNodeInScreen(Vector2 touchPos, float radiusPx)
+        {
+            RootNode best       = null;
+            float    bestDistSq = radiusPx * radiusPx;
+
+            foreach (RootNode node in _graphLoader.Graph.Nodes)
+            {
+                Vector3 world  = _graphLoader.NodeWorldPosition(node);
+                Vector3 screen = _arCamera.WorldToScreenPoint(world);
+
+                if (screen.z < 0f) continue;   // behind the camera
+
+                float dx     = screen.x - touchPos.x;
+                float dy     = screen.y - touchPos.y;
+                float distSq = dx * dx + dy * dy;
+
+                if (distSq < bestDistSq) { bestDistSq = distSq; best = node; }
+            }
+
+            return best;
         }
     }
 }

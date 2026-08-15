@@ -34,6 +34,7 @@ namespace AquiFuturo.Audio
         private float _poseLogTimer;
         private const float PoseLogInterval = 0.5f;
 
+        // Awake check for ARCameraManager
         private void Awake()
         {
             // Cache camera once — do not use Camera.main in Update.

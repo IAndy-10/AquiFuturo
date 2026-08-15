@@ -56,14 +56,19 @@ def probe_model(model):
     return sr, latent_dim, hop
 
 
-def latent_stats_from_refs(model, sr, latent_dim, ref_paths):
-    """Encode reference audio; return per-dim (mean, std) of the latent usage."""
+def latent_stats_from_refs(model, sr, ref_paths, n_components=8):
+    """Encode reference audio; run PCA on the latent vectors.
+
+    Returns:
+        mean           (D,)              — per-dim latent mean
+        pca_components (D, n_components) — top-n eigenvectors of latent space
+        coord_std      (n_components,)   — std of projected coords (sets excursion scale)
+    """
     zs = []
     for p in ref_paths:
         audio, in_sr = sf.read(p, always_2d=True)
         audio = audio.mean(axis=1)  # mono
         if in_sr != sr:
-            # cheap linear resample; fine for statistics
             n_out = int(len(audio) * sr / in_sr)
             audio = np.interp(np.linspace(0, len(audio) - 1, n_out),
                               np.arange(len(audio)), audio)
@@ -72,10 +77,27 @@ def latent_stats_from_refs(model, sr, latent_dim, ref_paths):
         zs.append(z)
         print(f"[refs] {p}: {z.shape[1]} frames")
     Z = np.concatenate(zs, axis=1)              # (D, total_T)
-    return Z.mean(axis=1), Z.std(axis=1)
+    mean = Z.mean(axis=1)                       # (D,)
+
+    # PCA on the latent vectors to find the 8 most expressive directions
+    Z_centered = (Z - mean[:, None]).T          # (total_T, D)
+    cov_mat = np.cov(Z_centered, rowvar=False)  # (D, D)
+    eigen_values, eigen_vectors = np.linalg.eigh(cov_mat)
+    sorted_index = np.argsort(eigen_values)[::-1]
+    pca_components = eigen_vectors[:, sorted_index[:n_components]]  # (D, n_components)
+
+    # Std of how much real audio moves along each principal axis
+    coords = Z_centered @ pca_components        # (total_T, n_components)
+    coord_std = coords.std(axis=0)              # (n_components,)
+
+    explained = (eigen_values[sorted_index[:n_components]].sum()
+                 / eigen_values.sum() * 100)
+    print(f"[refs] latent PCA: {n_components} components explain {explained:.1f}% variance")
+    return mean, pca_components, coord_std
 
 
 # ---------------------------------------------------------------- graph -> trajectory
+
 
 def node_features(graph, tour):
     """Per-node feature matrix along the tour, standardized to zero-mean/unit-std.
@@ -99,7 +121,8 @@ def node_features(graph, tour):
         ]
         for i in tour
     ])
-    return (F - F.mean(0)) / (F.std(0) + 1e-8)
+    z_scores = (F - F.mean(0)) / (F.std(0) + 1e-8)
+    return z_scores
 
 
 def build_trajectory(Zanchors, n_frames):
@@ -110,17 +133,19 @@ def build_trajectory(Zanchors, n_frames):
     return cs(np.linspace(0.0, 1.0, n_frames, endpoint=False))  # (T, k)
 
 
-def features_to_latent(traj_feats, latent_dim, z_scale, mean=None, std=None):
-    """(T, k) standardized features -> (T, D) latent trajectory."""
-    T, k = traj_feats.shape
-    Z = np.zeros((T, latent_dim), dtype=np.float32)
-    Z[:, :min(k, latent_dim)] = traj_feats[:, :latent_dim]
-    if mean is not None:
-        # calibrate to the model's actual latent usage: mean ± z_scale*std
-        Z = mean[None, :] + Z * (std[None, :] * z_scale * 0.5)
-    else:
-        Z *= z_scale
-    return Z
+def features_to_latent_pca(traj_feats, latent_dim, z_scale, mean, pca_components, coord_std):
+    """Map (T, 8) standardized features into (T, D) latent space via the PCA basis.
+
+    Each root feature controls one principal axis of the model's latent space.
+    Reconstruction: Z = mean + (features * coord_std * z_scale) @ pca_components.T
+    """
+    # Scale features to match how far real audio moves along each axis,
+    # then amplify/reduce excursion with z_scale
+    scaled = traj_feats * coord_std[None, :] * z_scale  # (T, 8)
+
+    # Project back through the latent PCA basis — no zero-padding needed
+    Z = mean[None, :] + scaled @ pca_components.T        # (T, D)
+    return Z.astype(np.float32)
 
 
 # ---------------------------------------------------------------- decode
@@ -158,6 +183,7 @@ def main():
     ap.add_argument("--out", default="track_root_rave.wav")
     ap.add_argument("--duration", type=float, default=150.0,
                     help="target seconds (120-180 per SPEC)")
+
     ap.add_argument("--tour", default=None,
                     help="tour name in graph['tours']; default = first")
     ap.add_argument("--z-scale", type=float, default=1.6,
@@ -175,17 +201,23 @@ def main():
     model = load_model(args.model)
     sr, latent_dim, hop = probe_model(model)
 
-    mean = std = None
-    if args.ref_audio:
-        paths = [p for pat in args.ref_audio for p in glob.glob(pat)]
-        if paths:
-            mean, std = latent_stats_from_refs(model, sr, latent_dim, paths)
-            print(f"[refs] calibrated latent frame from {len(paths)} file(s)")
+    if not args.ref_audio:
+        ap.error("--ref-audio is required for the PCA latent approach")
+
+    paths = [p for pat in args.ref_audio for p in glob.glob(pat)]
+    if not paths:
+        ap.error("--ref-audio matched no files")
 
     n_frames = int(round(args.duration * sr / hop))
     feats = node_features(graph, seq)
+    n_feat = feats.shape[1]  # 8 root graph features
+
+    mean, pca_components, coord_std = latent_stats_from_refs(
+        model, sr, paths, n_components=n_feat)
+    print(f"[refs] calibrated latent PCA from {len(paths)} file(s)")
+
     traj = build_trajectory(feats, n_frames)
-    Z = features_to_latent(traj, latent_dim, args.z_scale, mean, std)
+    Z = features_to_latent_pca(traj, latent_dim, args.z_scale, mean, pca_components, coord_std)
     print(f"[traj] {n_frames} latent frames -> ~{n_frames*hop/sr:.1f}s of audio")
 
     audio = decode_chunked(model, Z)
