@@ -494,7 +494,7 @@ def main() -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         out_path.write_text(json.dumps(graph, indent=2), encoding="utf-8")
-    except IOError as exc:
+    except OSError as exc:
         log.error("Failed to write %s: %s", out_path, exc)
         sys.exit(1)
 

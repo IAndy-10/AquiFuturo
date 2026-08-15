@@ -128,6 +128,7 @@ namespace AquiFuturo.Core
         {
             AppState prev = _state;
             _state = next;
+            Debug.Log($"[GameManager] {prev} → {next}");
             OnStateChanged?.Invoke(prev, next);
             SessionLogger.Instance?.LogStateChange(prev, next);
 

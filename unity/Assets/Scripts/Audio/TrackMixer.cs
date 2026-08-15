@@ -157,6 +157,19 @@ namespace AquiFuturo.Audio
             }
         }
 
+        private void OnApplicationPause(bool paused)
+        {
+            // iOS suspends audio output on background. On resume, reschedule any
+            // tracks that stopped so the mix continues without requiring a restart.
+            if (paused || !_started || _tracks == null || _audioConfig == null) return;
+
+            foreach (var track in _tracks)
+            {
+                if (track?.Source == null || track.Source.isPlaying) continue;
+                track.Source.PlayScheduled(AudioSettings.dspTime + _audioConfig.scheduleMarginSeconds);
+            }
+        }
+
         private void HandleStateChanged(AppState prev, AppState next)
         {
             if (next == AppState.Adjusting)

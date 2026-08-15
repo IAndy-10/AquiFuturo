@@ -12,6 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41ad71bf90e274be9841eb4cd7f22e3e, type: 3}
   m_Name: RootMeshSettings
   m_EditorClassIdentifier: Assembly-CSharp::AquiFuturo.Graph.RootMeshConfig
-  tubeSides: 6
-  scaleMultiplier: 1.22
-  rootMaterial: {fileID: 2100000, guid: c9f065f3ed8b34594b0377ba5f971152, type: 2}
+  scaleMultiplier: 1

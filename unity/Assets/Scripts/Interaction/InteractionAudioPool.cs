@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using AquiFuturo.Core;
 
@@ -25,7 +24,6 @@ namespace AquiFuturo.Interaction
 
         private AudioSource[] _pool;
         private int           _nextSlot;
-        private int           _activeCount;
 
         private void Awake()
         {
@@ -58,7 +56,11 @@ namespace AquiFuturo.Interaction
 
             int maxConcurrent = _config != null ? _config.maxConcurrentInteractions : 6;
             AudioSource src = AcquireVoice(maxConcurrent);
-            if (src == null) return;
+            if (src == null)
+            {
+                Debug.LogWarning("[InteractionAudioPool] AcquireVoice returned null — skipping play.");
+                return;
+            }
 
             src.clip       = clip;
             src.panStereo  = Mathf.Clamp(panValue, -1f, 1f);
@@ -70,45 +72,40 @@ namespace AquiFuturo.Interaction
 
         private AudioSource AcquireVoice(int maxConcurrent)
         {
-            // Steal oldest if at max concurrent.
-            if (_activeCount >= maxConcurrent)
+            // Count live voices and locate the oldest (to steal) and first idle slot.
+            int playing = 0;
+            AudioSource firstIdle = null;
+            AudioSource oldest    = null;
+            float       minTime   = float.MaxValue;
+
+            for (int i = 0; i < _pool.Length; i++)
             {
-                var oldest = OldestActive();
-                oldest?.Stop();
+                AudioSource src = _pool[i];
+                if (src.isPlaying)
+                {
+                    playing++;
+                    if (src.time < minTime) { minTime = src.time; oldest = src; }
+                }
+                else if (firstIdle == null)
+                {
+                    firstIdle = src;
+                }
+            }
+
+            // Under the concurrent limit — use an idle slot if one exists.
+            if (playing < maxConcurrent && firstIdle != null)
+                return firstIdle;
+
+            // At or over the limit (or no idle slot) — steal the oldest active voice.
+            if (oldest != null)
+            {
+                oldest.Stop();
                 return oldest;
             }
 
-            // Find first idle slot.
-            for (int i = 0; i < _pool.Length; i++)
-            {
-                if (!_pool[i].isPlaying)
-                {
-                    _activeCount++;
-                    return _pool[i];
-                }
-            }
-
-            // Fallback: steal next in round-robin.
-            var stolen = _pool[_nextSlot % _pool.Length];
-            _nextSlot++;
-            stolen.Stop();
-            return stolen;
-        }
-
-        private AudioSource OldestActive()
-        {
-            // Simple heuristic: return the pool voice with the smallest time offset.
-            AudioSource oldest = null;
-            float minTime = float.MaxValue;
-            foreach (var src in _pool)
-            {
-                if (src.isPlaying && src.time < minTime)
-                {
-                    minTime = src.time;
-                    oldest  = src;
-                }
-            }
-            return oldest;
+            // All slots idle and none found (pool is empty — shouldn't happen).
+            Debug.LogWarning("[InteractionAudioPool] Pool is empty — cannot acquire voice.");
+            return null;
         }
 
         private AudioClip PickClip(string nodeClass)

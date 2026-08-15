@@ -9,8 +9,9 @@ namespace AquiFuturo.Core
         [Tooltip("Minimum milliseconds between accepted touches on the same node.")]
         public float debounceMs = 120f;
 
-        [Tooltip("Maximum raycast distance for root mesh touches in metres.")]
-        public float raycastDistanceM = 10f;
+        [Tooltip("Screen-space tap radius in pixels. A node within this distance from the touch " +
+                 "point (in screen pixels) is considered hit. 80 px ≈ fingertip at iPhone resolution.")]
+        public float screenSpaceTapRadiusPx = 80f;
 
         [Tooltip("Spatial hash cell size in metres (SPEC §10).")]
         public float spatialHashCellSize = 0.25f;
