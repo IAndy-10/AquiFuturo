@@ -31,7 +31,6 @@ import math
 import sys
 from pathlib import Path
 
-
 DEPTH_TRUNK_MID  = -2.786   # Y midpoint — splits upper/lower trunk
 DEPTH_HORIZ_CUTOFF = -2.0   # Y cutoff — above this = shallow horizontal zone
 SPREAD_THRESH    = 1.2      # radial distance from trunk axis (metres)

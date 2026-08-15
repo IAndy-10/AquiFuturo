@@ -239,7 +239,7 @@ def validate_audio_manifest(
                         f"expected {EXPECTED_CHANNELS} (stereo) (SPEC §6.5)"
                     )
                 track_sample_lengths[filename] = info.frames
-            except Exception as exc:
+            except (OSError, RuntimeError) as exc:
                 errors.append(f"Could not read audio info from '{filename}': {exc}")
 
     # All tracks must have identical sample length
@@ -324,7 +324,7 @@ def validate_glb(glb_path: Path) -> list[str]:
 
     try:
         gltf = pygltflib.GLTF2().load(str(glb_path))
-    except Exception as exc:
+    except (OSError, ValueError) as exc:
         errors.append(f"Failed to parse {glb_path}: {exc}")
         return errors
 

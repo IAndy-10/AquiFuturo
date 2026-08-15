@@ -7,6 +7,8 @@ Format: `<type>: <description>` — one line per milestone entry.
 
 ## Unreleased
 
+- feat: RAVE pipeline — pca_rave.py (TSP tour → PCA latent → WAV), split_roots.py (4-zone skeleton split), per-zone root_graph_g1–g4.json; data layout restructured to data/raw/ + data/processed/
+- feat: physical modelling — tree_to_wav.py (modal mass-spring synthesis from branch_graph.json), simplify_graph.py (RDP 3D branch simplification 267→175 nodes); 6 × 120s WAV renders in physical-modelling/
 - fix: spatial hash coordinate mismatch — RootGraphLoader stores hash in graph space, NearestNodeTo() back-projects world hit point via InverseTransformPoint; RootInteraction calls NearestNodeTo() instead of SpatialHash.NearestTo()
 - refactor: gut RootMeshBuilder — remove procedural tube mesh; collision now on FBX MeshCollider; RootMeshBuilder only rebuilds spatial hash in world space
 - feat: Unity FBX import — AquiFuturo_RootA/Trunk FBX assets, URP pipeline, ARLightEstimation (ambient + directional), TestScene for scale validation, scenes relocated to Assets/Scenes/

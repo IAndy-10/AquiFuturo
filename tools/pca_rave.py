@@ -15,11 +15,14 @@ Usage:
 Deps: pip install torch numpy scipy soundfile
 """
 
-import argparse, glob, json, sys
+import argparse
+import glob
+import json
+
 import numpy as np
+import soundfile as sf
 import torch
 from scipy.interpolate import CubicSpline
-import soundfile as sf
 
 torch.set_grad_enabled(False)
 
@@ -152,7 +155,7 @@ def features_to_latent_pca(traj_feats, latent_dim, z_scale, mean, pca_components
 
 def decode_chunked(model, Z, chunk_frames=512, overlap=8):
     """Decode (T, D) latent trajectory in overlapping chunks, crossfaded."""
-    T, D = Z.shape
+    T, _D = Z.shape
     out, prev_tail, hop_len = [], None, None
     starts = list(range(0, T, chunk_frames))
     for si, s in enumerate(starts):
@@ -192,7 +195,8 @@ def main():
                     help="wav files to calibrate latent stats (recommended)")
     args = ap.parse_args()
 
-    graph = json.load(open(args.graph))
+    with open(args.graph) as fh:
+        graph = json.load(fh)
     tours = graph["tours"]
     tour = next((t for t in tours if t["name"] == args.tour), tours[0])
     seq = tour["node_sequence"]
@@ -208,7 +212,7 @@ def main():
     if not paths:
         ap.error("--ref-audio matched no files")
 
-    n_frames = int(round(args.duration * sr / hop))
+    n_frames = round(args.duration * sr / hop)
     feats = node_features(graph, seq)
     n_feat = feats.shape[1]  # 8 root graph features
 
