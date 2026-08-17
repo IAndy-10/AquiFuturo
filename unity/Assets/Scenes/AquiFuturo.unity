@@ -233,7 +233,7 @@ GameObject:
   - component: {fileID: 62140168}
   - component: {fileID: 62140167}
   m_Layer: 0
-  m_Name: Track_RootRave
+  m_Name: Track_birds1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -266,11 +266,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ddcebcaf00f44ad89a0af3abed727d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AquiFuturo.Audio.TrackChannel
-  _trackId: root_rave
-  _baseGainDb: -4
-  _tiltBias: -1
+  _trackId: track_birds1
+  _baseGainDb: -8
+  _tiltBias: 0.5
   _isStatic: 0
-  _lpfSensitivity: 1
+  _lpfSensitivity: 0.7
   _panWidth: 1
 --- !u!169 &62140168
 AudioLowPassFilter:
@@ -308,7 +308,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 617f94b45caf048029d1caa0f792d46f, type: 3}
+  m_Resource: {fileID: 8300000, guid: 3a14734ce69864f0ea040831f31e4101, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -583,6 +583,7 @@ MonoBehaviour:
   _audioPool: {fileID: 819137719}
   _particleSpawner: {fileID: 0}
   _poseAnalyzer: {fileID: 903892725}
+  _arCamera: {fileID: 0}
 --- !u!4 &819137718
 Transform:
   m_ObjectHideFlags: 0
@@ -627,6 +628,8 @@ MonoBehaviour:
   - nodeClass: terminal
     clips:
     - {fileID: 8300000, guid: 7370bc1842ab44c4685920f72a0004a8, type: 3}
+  _pool: []
+  _nextSlot: 0
 --- !u!1 &882135181
 GameObject:
   m_ObjectHideFlags: 0
@@ -640,7 +643,7 @@ GameObject:
   - component: {fileID: 882135184}
   - component: {fileID: 882135183}
   m_Layer: 0
-  m_Name: Track_Soil
+  m_Name: Track_birds2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -673,12 +676,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ddcebcaf00f44ad89a0af3abed727d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AquiFuturo.Audio.TrackChannel
-  _trackId: soil
-  _baseGainDb: -8
-  _tiltBias: -0.5
+  _trackId: track_birds2
+  _baseGainDb: -10
+  _tiltBias: 0.5
   _isStatic: 0
-  _lpfSensitivity: 1
-  _panWidth: 1
+  _lpfSensitivity: 0.6
+  _panWidth: 0.9
 --- !u!169 &882135184
 AudioLowPassFilter:
   m_ObjectHideFlags: 0
@@ -715,7 +718,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cece45233013a445fa5b26cc67cb66c5, type: 3}
+  m_Resource: {fileID: 8300000, guid: 88d65de54e13a4a8992070a152ce86f9, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -1285,6 +1288,56 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1129811231
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1129811232}
+  - component: {fileID: 1129811233}
+  m_Layer: 0
+  m_Name: ZoneInteraction
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1129811232
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1129811231}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: -2.58725, z: -0.23296}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1129811233
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1129811231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bda0a5eda60147bea1bb820841b136a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AquiFuturo.Interaction.ZoneInteraction
+  _gameManager: {fileID: 903892728}
+  _config: {fileID: 11400000, guid: 9f28fa67d4bfd44b3b1630222541a843, type: 2}
+  _zoneMask:
+    serializedVersion: 2
+    m_Bits: 64
+  _raycastDistance: 50
 --- !u!1 &1251409188
 GameObject:
   m_ObjectHideFlags: 0
@@ -1425,7 +1478,7 @@ GameObject:
   - component: {fileID: 1273009612}
   - component: {fileID: 1273009611}
   m_Layer: 0
-  m_Name: Track_Canopy
+  m_Name: Track_canopy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1458,11 +1511,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ddcebcaf00f44ad89a0af3abed727d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AquiFuturo.Audio.TrackChannel
-  _trackId: canopy
-  _baseGainDb: -10
+  _trackId: track_canopy
+  _baseGainDb: -8
   _tiltBias: 1
   _isStatic: 0
-  _lpfSensitivity: 1
+  _lpfSensitivity: 0.8
   _panWidth: 1
 --- !u!169 &1273009612
 AudioLowPassFilter:
@@ -1717,6 +1770,7 @@ Transform:
   - {fileID: 882135182}
   - {fileID: 1273009610}
   - {fileID: 1791270087}
+  - {fileID: 1408157277}
   m_Father: {fileID: 903892729}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1306046747
@@ -1740,6 +1794,181 @@ MonoBehaviour:
   - {fileID: 882135183}
   - {fileID: 1273009611}
   - {fileID: 1791270088}
+  - {fileID: 1408157278}
+--- !u!1 &1408157276
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1408157277}
+  - component: {fileID: 1408157280}
+  - component: {fileID: 1408157279}
+  - component: {fileID: 1408157278}
+  m_Layer: 0
+  m_Name: Track_voice
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1408157277
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157276}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1306046746}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1408157278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157276}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ddcebcaf00f44ad89a0af3abed727d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AquiFuturo.Audio.TrackChannel
+  _trackId: track_voice
+  _baseGainDb: -4
+  _tiltBias: 1
+  _isStatic: 0
+  _lpfSensitivity: 1
+  _panWidth: 0.8
+--- !u!169 &1408157279
+AudioLowPassFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157276}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_LowpassResonanceQ: 1
+  lowpassLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.22727273
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!82 &1408157280
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1408157276}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 8300000, guid: ab122ecf619df43338cce0df5479d57e, type: 3}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 1
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 0
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1478335301
 GameObject:
   m_ObjectHideFlags: 0
@@ -2023,7 +2252,7 @@ GameObject:
   - component: {fileID: 1791270089}
   - component: {fileID: 1791270088}
   m_Layer: 0
-  m_Name: Track_Drone
+  m_Name: Track_river
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2056,12 +2285,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ddcebcaf00f44ad89a0af3abed727d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AquiFuturo.Audio.TrackChannel
-  _trackId: drone
-  _baseGainDb: -12
+  _trackId: track_river
+  _baseGainDb: -10
   _tiltBias: 0
-  _isStatic: 0
-  _lpfSensitivity: 1
-  _panWidth: 1
+  _isStatic: 1
+  _lpfSensitivity: 0
+  _panWidth: 0
 --- !u!169 &1791270089
 AudioLowPassFilter:
   m_ObjectHideFlags: 0
@@ -2098,7 +2327,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 438b08dc543e344f3b95320fd1764851, type: 3}
+  m_Resource: {fileID: 8300000, guid: 1b183bafae3c24b0fb4a45a60297c4e8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
@@ -2304,3 +2533,4 @@ SceneRoots:
   - {fileID: 1251409191}
   - {fileID: 1098223658}
   - {fileID: 582512406}
+  - {fileID: 1129811232}
