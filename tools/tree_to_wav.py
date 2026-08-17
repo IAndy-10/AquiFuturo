@@ -8,22 +8,43 @@ Method: Modal analysis of the mass-spring system.
   - Edges = springs (k ∝ stiffness_scale / length²)
   - Solve generalised eigenvalue problem K·φ = ω²·M·φ
   - Synthesise audio by summing modal contributions at listening nodes
-  - Optionally drive with TSP tour sweep (echoing pca_rave.py approach)
+  - Optionally drive with a TSP tour strike train
+
+AUDIBILITY FIX (v2)
+-------------------
+The old `tour_sweep` excitation used a slow Gaussian *envelope* directly as the
+force signal. A Gaussian of width σ ≈ 0.2–1.3 s carries essentially no energy
+above ~1 Hz, so every resonator was driven far below resonance and returned its
+quasi-static deflection F/ω² — a sub-sonic DC wander, not a tone. Peak
+normalisation then set the level from that inaudible excursion, leaving the
+real modal content 60–110 dB down. Only the impulse path (broadband by nature)
+produced audible ringing.
+
+v2 changes:
+  * `strike_tour` (new default): each tour node is struck with a short
+    broadband click whose width auto-scales to the top of the frequency window,
+    so energy actually lands on the modes
+  * `--mode-tilt` replaces the hard-wired 1/ω displacement tilt (default 0 =
+    velocity-like/flat, so high modes are no longer 100× quieter than low ones)
+  * `--listen-sum abs` avoids phase cancellation when summing mode shapes over
+    many listening nodes
+  * `--highpass` removes the DC/sub-sonic term before normalisation
+  * `--normalize rms` levels by loudness rather than by peak
 
 Usage:
-    # Quick impulse at trunk base, listen at terminals:
-    python3 tools/tree_to_wav.py --graph data/branch_graph.json \\
-        --out physical-modelling/tree_impulse.wav
+    # Strike tour along the TSP path, listening at terminals:
+    python3 tools/tree_to_wav.py --graph data/processed/branch_graph.json \\
+        --out physical-modelling/tree_strikes.wav
 
-    # Tour sweep, wider frequency window, more damping:
-    python3 tools/tree_to_wav.py --graph data/branch_graph.json \\
-        --out physical-modelling/tree_sweep.wav \\
-        --excitation tour_sweep --damping 0.05 --freq-min 40 --freq-max 3000
+    # Single pluck at trunk base:
+    python3 tools/tree_to_wav.py --graph data/processed/branch_graph.json \\
+        --out physical-modelling/tree_impulse.wav --excitation impulse
 
-    # Bright, lightly damped, all terminals:
-    python3 tools/tree_to_wav.py --graph data/branch_graph.json \\
+    # Bright, lightly damped, all nodes:
+    python3 tools/tree_to_wav.py --graph data/processed/branch_graph.json \\
         --out physical-modelling/tree_bright.wav \\
-        --stiffness-scale 4.0 --damping 0.005 --n-modes 128 --freq-max 8000
+        --stiffness-scale 4.0 --damping 0.005 --n-modes 128 --freq-max 8000 \\
+        --listen-class all
 
 Deps: pip install numpy scipy soundfile
 """
@@ -31,6 +52,7 @@ Deps: pip install numpy scipy soundfile
 import argparse
 import json
 import logging
+import math
 import sys
 from pathlib import Path
 
@@ -64,13 +86,7 @@ def build_matrices(
     stiffness_scale: float,
     mass_scale: float,
 ) -> tuple[np.ndarray, np.ndarray, dict[int, int]]:
-    """Build stiffness K and mass M matrices from the graph.
-
-    Returns:
-        K          (N, N) stiffness matrix (weighted Laplacian)
-        M          (N,)   mass vector (diagonal of mass matrix)
-        id_to_idx  mapping from node id to matrix index
-    """
+    """Build stiffness K and mass M matrices from the graph."""
     nodes = graph["nodes"]
     edges = graph["edges"]
     N = len(nodes)
@@ -109,44 +125,28 @@ def modal_analysis(
     freq_max: float,
     sr: int,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Solve generalised eigenvalue problem K·φ = ω²·M·φ.
-
-    Returns:
-        freqs   (n_kept,)    resonant frequencies in Hz
-        modes   (N, n_kept)  mode shape matrix, mass-normalised
-    """
+    """Solve generalised eigenvalue problem K·φ = ω²·M·φ."""
     N = K.shape[0]
     n_modes = min(n_modes, N - 1)
 
-    # Regularise M to avoid division by zero
     M_reg = np.maximum(M, 1e-10)
-
-    # Scale to M⁻½ · K · M⁻½ form for standard eigenvalue solve
-    M_sqrt_inv = 1.0 / np.sqrt(M_reg)           # (N,)
+    M_sqrt_inv = 1.0 / np.sqrt(M_reg)
     K_sym = M_sqrt_inv[:, None] * K * M_sqrt_inv[None, :]
-
-    # Symmetrise to kill floating-point asymmetry
     K_sym = 0.5 * (K_sym + K_sym.T)
 
     log.info(f"Solving eigenvalue problem (N={N}, requesting {n_modes} modes)…")
-    # scipy.linalg.eigh returns eigenvalues in ascending order
-    # 'subset_by_index' picks the n_modes+1 smallest (lowest freq first)
-    # driver must be 'evr' or 'evx' to support subsets
     eigenvalues, eigenvectors = scipy.linalg.eigh(
         K_sym,
         subset_by_index=[0, n_modes],
         driver="evr",
     )
 
-    # ω² = eigenvalue (may be slightly negative due to float error at zero mode)
     omega_sq = np.maximum(eigenvalues, 0.0)
     omega = np.sqrt(omega_sq)                    # rad/s
-    freqs = omega / (2.0 * np.pi)               # Hz
+    freqs = omega / (2.0 * np.pi)                # Hz
 
-    # Back-transform eigenvectors: φ = M⁻½ · v
-    modes = M_sqrt_inv[:, None] * eigenvectors  # (N, n_modes+1)
+    modes = M_sqrt_inv[:, None] * eigenvectors
 
-    # Filter to audible window (skip DC / rigid-body mode at ≈0 Hz)
     nyquist = sr / 2.0
     freq_max_clip = min(freq_max, nyquist * 0.95)
     mask = (freqs >= freq_min) & (freqs <= freq_max_clip)
@@ -154,11 +154,39 @@ def modal_analysis(
     freqs = freqs[mask]
     modes = modes[:, mask]
 
-    log.info(
-        f"Modal analysis: {mask.sum()} modes in [{freq_min:.1f}, {freq_max_clip:.1f}] Hz "
-        f"(range: {freqs.min():.2f}–{freqs.max():.2f} Hz)"
-    )
+    if len(freqs):
+        log.info(
+            f"Modal analysis: {mask.sum()} modes in [{freq_min:.1f}, {freq_max_clip:.1f}] Hz "
+            f"(range: {freqs.min():.2f}–{freqs.max():.2f} Hz)"
+        )
     return freqs, modes
+
+
+# ---------------------------------------------------------------- DSP helpers
+
+def highpass(x: np.ndarray, sr: int, fc: float, order: int = 2) -> np.ndarray:
+    """Zero-phase Butterworth high-pass — removes the quasi-static DC term."""
+    if fc <= 0.0 or fc >= sr / 2.0 or len(x) < 3 * (order + 1) * 2:
+        return x
+    sos = scipy.signal.butter(order, fc / (sr / 2.0), btype="high", output="sos")
+    return scipy.signal.sosfiltfilt(sos, x)
+
+
+def soft_clip(x: np.ndarray, ceiling: float = 0.98) -> np.ndarray:
+    return ceiling * np.tanh(x / max(ceiling, 1e-9))
+
+
+def rms(x: np.ndarray) -> float:
+    return float(np.sqrt(np.mean(np.square(x)))) if len(x) else 0.0
+
+
+def band_energy_fraction(x: np.ndarray, sr: int, lo: float, hi: float) -> float:
+    n = min(len(x), 1 << 20)
+    seg = x[:n] * np.hanning(n)
+    P = np.abs(np.fft.rfft(seg)) ** 2
+    f = np.fft.rfftfreq(n, 1.0 / sr)
+    m = (f >= lo) & (f < hi)
+    return float(P[m].sum() / (P.sum() + 1e-30))
 
 
 # ---------------------------------------------------------------- excitation
@@ -183,35 +211,67 @@ def build_excitation_noise(N: int, rng: np.random.Generator) -> np.ndarray:
     return f
 
 
-def build_tour_excitation_envelope(
+def build_strike_events(
     tour: list[int],
     id_to_idx: dict[int, int],
-    N: int,
-    n_frames: int,
-) -> np.ndarray:
-    """Time-varying force: sweep through tour nodes, each receiving a Gaussian bump.
+    sr: int,
+    duration: float,
+    min_strike_rate: float,
+    jitter: float,
+    amp_spread: float,
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Strike train along the tour: (node_indices, sample_times, amplitudes).
 
-    Returns F (N, n_frames) — force at each node over time.
-    Each tour node gets a bump centred at its position in the sweep.
+    The tour is repeated as many times as needed to reach `min_strike_rate`
+    strikes per second, so sparse tours do not read as silence.
     """
-    log.info(f"Excitation: tour_sweep over {len(tour)} nodes → {n_frames} frames")
-    F = np.zeros((N, n_frames), dtype=np.float32)
-    n_nodes = len(tour)
-    bump_width = n_frames / n_nodes / 3.0          # σ in frames
+    seq = [nid for nid in tour if nid in id_to_idx]
+    if not seq:
+        raise ValueError("Tour contains no nodes present in the graph.")
 
-    for k, node_id in enumerate(tour):
-        if node_id not in id_to_idx:
-            continue
-        idx = id_to_idx[node_id]
-        centre = (k + 0.5) / n_nodes * n_frames
-        t = np.arange(n_frames)
-        bump = np.exp(-0.5 * ((t - centre) / bump_width) ** 2)
-        F[idx] += bump
+    n_samples = int(sr * duration)
+    repeats = max(1, math.ceil(duration * min_strike_rate / len(seq)))
+    seq_rep = seq * repeats
+    n_ev = len(seq_rep)
 
-    return F
+    interval = n_samples / n_ev
+    times = (np.arange(n_ev) + 0.5) * interval
+    if jitter > 0.0:
+        times = times + rng.uniform(-jitter, jitter, n_ev) * interval
+    times = np.clip(times, 0, n_samples - 1).astype(np.int64)
+
+    amps = np.exp(rng.normal(0.0, amp_spread, n_ev)) if amp_spread > 0 else np.ones(n_ev)
+    idx = np.array([id_to_idx[nid] for nid in seq_rep], dtype=np.int64)
+
+    log.info(f"Excitation: strike_tour — {len(seq)} nodes × {repeats} passes "
+             f"= {n_ev} strikes ({n_ev / duration:.2f} /s)")
+    return idx, times, amps
 
 
 # ---------------------------------------------------------------- synthesis
+
+def _listen_shape(modes: np.ndarray, listen_idx: list[int], how: str) -> np.ndarray:
+    """Modal participation at the listening nodes.
+
+    'signed' is the textbook sum, but mode shapes alternate sign across a large
+    node set, so summing many nodes cancels most of the amplitude ('fine'
+    measured a coherence of 0.26). 'abs' models spatially incoherent pickup.
+    """
+    sub = modes[listen_idx, :]
+    return np.abs(sub).sum(axis=0) if how == "abs" else sub.sum(axis=0)
+
+
+def _mode_kernel(
+    wd: float, zeta_w: float, sr: int, n_samples: int, max_len: int = 262_144
+) -> np.ndarray | None:
+    decay_time = 6.0 / (zeta_w + 1e-6)
+    kernel_len = int(min(decay_time * sr, n_samples, max_len))
+    if kernel_len < 2 or wd < 1e-3:
+        return None
+    t_k = np.arange(kernel_len) / sr
+    return np.sin(wd * t_k) * np.exp(-zeta_w * t_k)
+
 
 def synthesise_modal(
     freqs: np.ndarray,
@@ -221,95 +281,82 @@ def synthesise_modal(
     damping: float,
     sr: int,
     duration: float,
+    mode_tilt: float = 0.0,
+    listen_sum: str = "abs",
 ) -> np.ndarray:
     """Impulse/noise excitation → modal synthesis → time-domain audio.
 
     For each mode k:
-        - modal force:       f_k = φ_k · F   (dot product over nodes)
-        - modal response:    q_k(t) = (f_k / ω_k) · sin(ω_k·t) · e^(-ζ·ω_k·t)
-        - physical output:   y(t) = Σ_k  (Σ_listen φ_k[listen]) · q_k(t)
-
-    Works for both static force vector and per-node stochastic (noise) vector.
+        - modal force:       f_k = φ_k · F
+        - modal response:    q_k(t) = f_k · ω_k^-tilt · sin(ω_k·t) · e^(-ζ·ω_k·t)
+        - physical output:   y(t) = Σ_k  L_k · q_k(t)
     """
     n_samples = int(sr * duration)
     t = np.arange(n_samples) / sr
 
-    # Modal participation at listening nodes
-    listen_shape = modes[listen_indices, :].sum(axis=0)    # (n_modes,)
+    listen_shape = _listen_shape(modes, listen_indices, listen_sum)
+    modal_force = modes.T @ excitation_force
 
-    # Modal forcing
-    modal_force = modes.T @ excitation_force               # (n_modes,)
-
-    omega = 2.0 * np.pi * freqs                           # (n_modes,)
-    omega_d = omega * np.sqrt(np.maximum(1.0 - damping**2, 1e-6))  # damped freq
+    omega = 2.0 * np.pi * freqs
+    omega_d = omega * np.sqrt(np.maximum(1.0 - damping ** 2, 1e-6))
 
     audio = np.zeros(n_samples, dtype=np.float64)
-    n_modes = len(freqs)
-
-    for k in range(n_modes):
-        w = omega[k]
-        wd = omega_d[k]
+    for k in range(len(freqs)):
+        w, wd = omega[k], omega_d[k]
         if wd < 1e-3:
             continue
-        amplitude = listen_shape[k] * modal_force[k] / (w + 1e-12)
-        decay = np.exp(-damping * w * t)
-        audio += amplitude * np.sin(wd * t) * decay
+        amplitude = listen_shape[k] * modal_force[k] / (w ** mode_tilt if mode_tilt else 1.0)
+        audio += amplitude * np.sin(wd * t) * np.exp(-damping * w * t)
 
     return audio
 
 
-def synthesise_modal_tour(
+def synthesise_modal_strikes(
     freqs: np.ndarray,
     modes: np.ndarray,
-    F: np.ndarray,
+    ev_idx: np.ndarray,
+    ev_t: np.ndarray,
+    ev_amp: np.ndarray,
     listen_indices: list[int],
     damping: float,
     sr: int,
     duration: float,
+    burst_ms: float,
+    mode_tilt: float = 0.0,
+    listen_sum: str = "abs",
 ) -> np.ndarray:
-    """Tour-sweep excitation → modal synthesis.
+    """Broadband strike train along the tour → modal ringing.
 
-    F is (N, n_frames_coarse), resampled to audio rate via cubic spline.
-    We compute the convolution response per mode using the modal force trajectory.
+    Replaces the old envelope-as-force `synthesise_modal_tour`. Each strike is
+    a short click, so its spectrum reaches the modal frequencies instead of
+    stopping ~3 decades below them.
     """
     n_samples = int(sr * duration)
-    t_audio = np.arange(n_samples) / sr
+    Phi_ev = modes[ev_idx, :] * ev_amp[:, None]
+    lis = _listen_shape(modes, listen_indices, listen_sum)
 
-    # Upsample force matrix from coarse frames to audio samples
-    n_coarse = F.shape[1]
-    t_coarse = np.linspace(0.0, duration, n_coarse)
+    # A click of width T low-passes at ~1/T; too wide and it attenuates the very
+    # band we want to excite. bl < 3 samples ⇒ use a bare unit impulse.
+    bl = max(1, int(round(burst_ms * 1e-3 * sr)))
+    if bl < 3:
+        burst = np.ones(1)
+    else:
+        burst = np.hanning(bl)
+        burst /= burst.sum()
 
-    # Project force onto modes: modal_force_t[k, :] = Σ_i φ_k[i] · F[i, t]
-    MF_coarse = modes.T @ F                         # (n_modes, n_coarse)
-
-    listen_shape = modes[listen_indices, :].sum(axis=0)    # (n_modes,)
     omega = 2.0 * np.pi * freqs
-    omega_d = omega * np.sqrt(np.maximum(1.0 - damping**2, 1e-6))
+    omega_d = omega * np.sqrt(np.maximum(1.0 - damping ** 2, 1e-6))
 
     audio = np.zeros(n_samples, dtype=np.float64)
-    n_modes = len(freqs)
-
-    for k in range(n_modes):
-        wd = omega_d[k]
-        zeta_w = damping * omega[k]
-        if wd < 1e-3:
+    for k in range(len(freqs)):
+        h = _mode_kernel(omega_d[k], damping * omega[k], sr, n_samples)
+        if h is None:
             continue
-
-        # Upsample modal force to audio rate
-        mf_audio = np.interp(t_audio, t_coarse, MF_coarse[k])
-
-        # Convolve with damped sinusoid impulse response
-        # h(t) = (1/ω_d) · sin(ω_d·t) · e^(-ζω·t)
-        # Use short kernel (keep it causally correct via overlap-add)
-        decay_time = 6.0 / (zeta_w + 1e-6)        # time to -60 dB
-        kernel_len = min(int(decay_time * sr), n_samples // 4, 65536)
-        if kernel_len < 2:
-            continue
-        t_k = np.arange(kernel_len) / sr
-        h = (1.0 / wd) * np.sin(wd * t_k) * np.exp(-zeta_w * t_k)
-
-        response = scipy.signal.fftconvolve(mf_audio, h, mode="full")[:n_samples]
-        audio += listen_shape[k] * response
+        h = scipy.signal.fftconvolve(h, burst)[: len(h) + len(burst)]
+        train = np.zeros(n_samples, dtype=np.float64)
+        np.add.at(train, ev_t, Phi_ev[:, k])
+        resp = scipy.signal.oaconvolve(train, h, mode="full")[:n_samples]
+        audio += (lis[k] / (omega[k] ** mode_tilt if mode_tilt else 1.0)) * resp
 
     return audio
 
@@ -322,31 +369,26 @@ def loop_to_duration(audio: np.ndarray, sr: int, duration: float) -> np.ndarray:
     if len(audio) == 0:
         return np.zeros(n_target)
 
-    # Crossfade window for looping
     fade_secs = min(0.5, len(audio) / sr / 4.0)
     fade_len = int(fade_secs * sr)
 
-    # Trim silence at tail to find natural loop point
     rms_window = max(1, len(audio) // 64)
-    energy = np.convolve(audio**2, np.ones(rms_window) / rms_window, mode="same")
+    energy = np.convolve(audio ** 2, np.ones(rms_window) / rms_window, mode="same")
     threshold = energy.max() * 1e-4
     nonzero = np.where(energy > threshold)[0]
     loop_end = nonzero[-1] + rms_window if len(nonzero) else len(audio)
     loop_end = min(loop_end, len(audio))
-    loop = audio[:loop_end]
+    loop = audio[:loop_end].copy()          # copy: the crossfade below mutates it
 
     if len(loop) < fade_len * 2:
-        # Too short to crossfade — just tile
-        tiled = np.tile(loop, (n_target // len(loop)) + 2)
+        tiled = np.tile(loop, (n_target // max(len(loop), 1)) + 2)
         return tiled[:n_target]
 
-    # Crossfade: blend tail into head
     fade_out = np.linspace(1.0, 0.0, fade_len)
     fade_in = np.linspace(0.0, 1.0, fade_len)
     loop[-fade_len:] = loop[-fade_len:] * fade_out + loop[:fade_len] * fade_in
-    loop_body = loop[fade_len:]                   # skip blended head on repeat
+    loop_body = loop[fade_len:]
 
-    # Tile
     out = np.empty(0)
     while len(out) < n_target:
         out = np.concatenate([out, loop_body])
@@ -403,13 +445,28 @@ def main() -> None:
                     help="lower frequency cutoff (Hz)")
     ap.add_argument("--freq-max", type=float, default=4000.0,
                     help="upper frequency cutoff (Hz)")
+    ap.add_argument("--mode-tilt", type=float, default=0.0,
+                    help="modal amplitude ∝ ω^-tilt. 0 = flat (velocity-like); "
+                         "1 = physical displacement (old behaviour, buries high modes)")
+    ap.add_argument("--listen-sum", choices=["abs", "signed"], default="abs",
+                    help="abs = incoherent pickup (no phase cancellation across many "
+                         "listening nodes); signed = old behaviour")
 
     # Excitation
-    ap.add_argument("--excitation", choices=["impulse", "noise", "tour_sweep"],
-                    default="impulse",
-                    help="excitation type: impulse=single pluck at trunk_base, "
-                         "noise=stochastic, tour_sweep=sequential excitation along tour")
-    ap.add_argument("--seed", type=int, default=42, help="RNG seed (for noise)")
+    ap.add_argument("--excitation", choices=["strike_tour", "impulse", "noise"],
+                    default="strike_tour",
+                    help="strike_tour=broadband click at each tour node, "
+                         "impulse=single pluck at trunk_base, noise=stochastic")
+    ap.add_argument("--burst-ms", type=float, default=-1.0,
+                    help="strike click width in ms; negative = auto "
+                         "(a quarter period at --freq-max)")
+    ap.add_argument("--min-strike-rate", type=float, default=1.5,
+                    help="minimum strikes/second; the tour repeats to reach it")
+    ap.add_argument("--strike-jitter", type=float, default=0.3,
+                    help="timing jitter as a fraction of the inter-strike interval")
+    ap.add_argument("--strike-amp-spread", type=float, default=0.35,
+                    help="log-normal σ of per-strike amplitude variation")
+    ap.add_argument("--seed", type=int, default=42, help="RNG seed")
 
     # Listening
     ap.add_argument("--listen-class",
@@ -418,8 +475,14 @@ def main() -> None:
                     help="node class to record output from")
 
     # Output
+    ap.add_argument("--highpass", type=float, default=0.7,
+                    help="high-pass cutoff as a fraction of --freq-min (0 disables); "
+                         "removes the sub-sonic quasi-static term before normalising")
+    ap.add_argument("--normalize", choices=["peak", "rms"], default="peak",
+                    help="peak = normalise by peak; rms = normalise by RMS then "
+                         "soft-limit (much louder perceptually)")
     ap.add_argument("--gain", type=float, default=0.891,
-                    help="output peak level (0–1), default = -1 dBFS")
+                    help="output target level (0–1); peak in peak mode, RMS in rms mode")
 
     args = ap.parse_args()
 
@@ -446,17 +509,7 @@ def main() -> None:
     rng = np.random.default_rng(args.seed)
     N = len(nodes)
 
-    if args.excitation == "impulse":
-        F_static = build_excitation_impulse(N, id_to_idx, nodes)
-        raw = synthesise_modal(freqs, modes, F_static, listen_idx,
-                               args.damping, args.sr, args.duration)
-
-    elif args.excitation == "noise":
-        F_static = build_excitation_noise(N, rng)
-        raw = synthesise_modal(freqs, modes, F_static, listen_idx,
-                               args.damping, args.sr, args.duration)
-
-    elif args.excitation == "tour_sweep":
+    if args.excitation == "strike_tour":
         tours = graph.get("tours", [])
         if not tours:
             log.error("No tours found in graph. Use --excitation impulse or noise.")
@@ -464,27 +517,64 @@ def main() -> None:
         tour_seq = tours[0]["node_sequence"]
         log.info(f"Tour: '{tours[0]['name']}' ({len(tour_seq)} nodes)")
 
-        # Coarse time grid: one frame per tour node
-        n_coarse = len(tour_seq) * 4      # 4 frames per node for smoother envelope
-        F_tour = build_tour_excitation_envelope(tour_seq, id_to_idx, N, n_coarse)
-        raw = synthesise_modal_tour(freqs, modes, F_tour, listen_idx,
-                                    args.damping, args.sr, args.duration)
+        burst_ms = args.burst_ms
+        if burst_ms < 0:
+            burst_ms = 250.0 / max(min(args.freq_max, args.sr / 2 * 0.95), 1.0)
+            log.info(f"Auto burst width {burst_ms:.3f} ms")
 
-    # ---- loop to duration
-    audio = loop_to_duration(raw, args.sr, args.duration)
+        ev_idx, ev_t, ev_amp = build_strike_events(
+            tour_seq, id_to_idx, args.sr, args.duration,
+            args.min_strike_rate, args.strike_jitter, args.strike_amp_spread, rng,
+        )
+        audio = synthesise_modal_strikes(
+            freqs, modes, ev_idx, ev_t, ev_amp, listen_idx, args.damping,
+            args.sr, args.duration, burst_ms, args.mode_tilt, args.listen_sum,
+        )
+
+    else:
+        if args.excitation == "impulse":
+            F_static = build_excitation_impulse(N, id_to_idx, nodes)
+        else:
+            F_static = build_excitation_noise(N, rng)
+        raw = synthesise_modal(freqs, modes, F_static, listen_idx, args.damping,
+                               args.sr, args.duration, args.mode_tilt, args.listen_sum)
+        audio = loop_to_duration(raw, args.sr, args.duration)
+
+    # ---- remove the quasi-static / DC term before normalising
+    fc = args.highpass * args.freq_min
+    if fc > 0:
+        audio = highpass(audio, args.sr, max(fc, 12.0))
+
+    in_band = band_energy_fraction(audio, args.sr, args.freq_min,
+                                   min(args.freq_max, args.sr / 2 * 0.95))
+    sub = band_energy_fraction(audio, args.sr, 0.0, 20.0)
+    log.info(f"In-band energy {100 * in_band:.2f} %   sub-20 Hz {100 * sub:.4f} %")
+    if in_band < 0.5:
+        log.warning("Less than half the energy is inside the requested window — "
+                    "output will be hard to hear.")
 
     # ---- normalise
-    peak = np.abs(audio).max()
-    if peak < 1e-10:
-        log.error("Output is silent — check frequency window and stiffness scale.")
-        sys.exit(1)
-    audio = (audio / peak * args.gain).astype(np.float32)
+    if args.normalize == "rms":
+        ref = rms(audio)
+        if ref < 1e-12:
+            log.error("Output is silent — check frequency window and stiffness scale.")
+            sys.exit(1)
+        out = soft_clip(audio / ref * args.gain)
+    else:
+        ref = np.abs(audio).max()
+        if ref < 1e-12:
+            log.error("Output is silent — check frequency window and stiffness scale.")
+            sys.exit(1)
+        out = audio / ref * args.gain
+    out = out.astype(np.float32)
 
     # ---- write
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    sf.write(str(args.out), audio, args.sr, subtype="PCM_24")
-    log.info(f"Wrote {args.out}  ({len(audio)/args.sr:.1f}s, {args.sr} Hz, "
-             f"{len(freqs)} modes, peak→{args.gain:.3f})")
+    sf.write(str(args.out), out, args.sr, subtype="PCM_24")
+    log.info(f"Wrote {args.out}  ({len(out)/args.sr:.1f}s, {args.sr} Hz, "
+             f"{len(freqs)} modes, peak={np.abs(out).max():.3f} "
+             f"({20*np.log10(np.abs(out).max()+1e-12):.1f} dBFS), "
+             f"rms={rms(out):.4f} ({20*np.log10(rms(out)+1e-12):.1f} dBFS))")
 
 
 if __name__ == "__main__":
