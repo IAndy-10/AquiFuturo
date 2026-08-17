@@ -7,6 +7,8 @@ Format: `<type>: <description>` — one line per milestone entry.
 
 ## Unreleased
 
+- feat: strike_tour excitation — replace broken tour_sweep (Gaussian envelope, quasi-static DC, ~110 dB below target band) with broadband click strike train; tree_to_wav.py gains --mode-tilt, --listen-sum abs, --highpass, --normalize rms
+- feat: branch_synth.py — per-branch-class modal synthesis (trunk_base 20–120 Hz → terminal 1500–8000 Hz), per-class RMS levelling, A-weighted audibility report, --save-parts; all five classes audible in v4 renders
 - feat: RAVE pipeline — pca_rave.py (TSP tour → PCA latent → WAV), split_roots.py (4-zone skeleton split), per-zone root_graph_g1–g4.json; data layout restructured to data/raw/ + data/processed/
 - feat: physical modelling — tree_to_wav.py (modal mass-spring synthesis from branch_graph.json), simplify_graph.py (RDP 3D branch simplification 267→175 nodes); 6 × 120s WAV renders in physical-modelling/
 - docs: M1 complete — placeholder AR placement, four test tracks sample-synced, LPF + pan responding to phone movement confirmed on device
