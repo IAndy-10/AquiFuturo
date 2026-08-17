@@ -4,16 +4,16 @@ namespace AquiFuturo.Interaction
 {
     /// <summary>
     /// Attached to each interaction zone Box Collider.
-    /// Holds the one-shot AudioClip for this zone and plays it on demand.
-    /// The AudioSource is created at runtime — no scene-side source needed.
+    /// Requires an AudioSource on the same GameObject — wire the clip and set
+    /// Volume there. ZoneInteraction calls Play() when a tap ray hits this zone.
+    ///
+    /// Box Collider must NOT have "Is Trigger" enabled — Physics.Raycast skips triggers.
     /// </summary>
     [RequireComponent(typeof(BoxCollider))]
+    [RequireComponent(typeof(AudioSource))]
     public sealed class ZoneTrigger : MonoBehaviour
     {
         [SerializeField] private int _zoneId;
-
-        [Tooltip("One-shot clip played when this zone is tapped (e.g. rave_zone1.wav).")]
-        [SerializeField] private AudioClip _clip;
 
         private AudioSource _source;
 
@@ -22,26 +22,24 @@ namespace AquiFuturo.Interaction
 
         private void Awake()
         {
-            var vo = new GameObject("ZoneVoice");
-            vo.transform.SetParent(transform);
-            _source              = vo.AddComponent<AudioSource>();
-            _source.spatialBlend = 0f;   // 2D - SPEC 9.1
+            _source              = GetComponent<AudioSource>();
+            _source.spatialBlend = 0f;   // 2D — SPEC §9.1
             _source.playOnAwake  = false;
-            _source.clip         = _clip;
+            _source.loop         = false;
         }
 
         /// <summary>Plays the zone clip panned to pan (-1 left, +1 right).</summary>
         public void Play(float pan)
         {
-            if (_clip == null)
+            if (_source.clip == null)
             {
-                Debug.LogWarning($"[ZoneTrigger] Zone {_zoneId} has no clip assigned.");
+                Debug.LogWarning($"[ZoneTrigger] Zone {_zoneId}: AudioSource has no clip assigned.");
                 return;
             }
             _source.panStereo = Mathf.Clamp(pan, -1f, 1f);
             _source.Stop();
             _source.Play();
-            Debug.Log($"[ZoneTrigger] Zone {_zoneId} triggered - pan={pan:F2}");
+            Debug.Log($"[ZoneTrigger] Zone {_zoneId} triggered — pan={pan:F2}");
         }
     }
 }

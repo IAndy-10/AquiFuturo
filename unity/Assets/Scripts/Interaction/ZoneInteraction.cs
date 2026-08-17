@@ -20,6 +20,9 @@ namespace AquiFuturo.Interaction
         [Tooltip("Layer mask covering only the four zone Box Colliders.")]
         [SerializeField] private LayerMask _zoneMask;
 
+        [Tooltip("Bypass AppState guard for in-editor testing. Disable before field sessions.")]
+        [SerializeField] private bool _startImmediatelyForTesting = false;
+
         [Tooltip("Max raycast distance in metres.")]
         [SerializeField] private float _raycastDistance = 50f;
 
@@ -39,7 +42,8 @@ namespace AquiFuturo.Interaction
 
         private void Update()
         {
-            if (_gameManager == null || _gameManager.State != AppState.Experiencing) return;
+            if (!_startImmediatelyForTesting &&
+                (_gameManager == null || _gameManager.State != AppState.Experiencing)) return;
             if (_arCamera == null) return;
             if (Input.touchCount == 0) return;
 
