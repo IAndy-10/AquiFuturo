@@ -89,6 +89,20 @@ namespace AquiFuturo.Placement
             _gameManager?.OnPlacementConfirmed();
         }
 
+        /// <summary>
+        /// Places the root system at the camera forward position and immediately confirms.
+        /// Called by the "Click to locate the roots" UI button (§8.1 manual placement).
+        /// </summary>
+        public void PlaceAndConfirm()
+        {
+            if (_placed) return;
+            AppState state = _gameManager != null ? _gameManager.State : AppState.Booting;
+            if (state != AppState.Placing && state != AppState.PlacingFallback) return;
+
+            PlaceFallback();                    // → InstantiateTree → OnTreePlaced → Adjusting
+            _gameManager?.OnPlacementConfirmed(); // → Experiencing (audio already started on Adjusting)
+        }
+
         /// <summary>Destroys the current tree instance and resets placement state.</summary>
         public void ResetPlacement()
         {

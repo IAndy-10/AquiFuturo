@@ -34,7 +34,7 @@ namespace AquiFuturo.Core
         private void Start()
         {
             ARSession.stateChanged += HandleARSessionStateChanged;
-            TransitionTo(AppState.Scanning);
+            TransitionTo(AppState.Menu);
         }
 
         private void OnDestroy()
@@ -58,6 +58,29 @@ namespace AquiFuturo.Core
             {
                 _trackingLossTimer += Time.deltaTime;
             }
+        }
+
+        // ── Called by MenuController ──────────────────────────────────────
+
+        /// <summary>Play pressed on main menu → begin onboarding.</summary>
+        public void OnMenuPlay()
+        {
+            if (_state == AppState.Menu)
+                TransitionTo(AppState.Instructions);
+        }
+
+        /// <summary>Last instruction card completed → start AR placement.</summary>
+        public void OnInstructionsComplete()
+        {
+            if (_state == AppState.Instructions)
+                TransitionTo(AppState.Placing);
+        }
+
+        /// <summary>Return to main menu from any state (reset clears the tree).</summary>
+        public void OnBackToMenu()
+        {
+            _scanTimer = 0f;
+            TransitionTo(AppState.Menu);
         }
 
         // ── Called by TreePlacement ───────────────────────────────────────
