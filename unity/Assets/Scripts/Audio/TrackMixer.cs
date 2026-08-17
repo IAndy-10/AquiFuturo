@@ -4,15 +4,16 @@ using AquiFuturo.Core;
 namespace AquiFuturo.Audio
 {
     /// <summary>
-    /// Owns the four looping TrackChannels and applies all pose-driven modulations
-    /// every frame (SPEC §9.1–§9.3). Responds to GameManager state changes for
-    /// the intro gain ramp and tracking-loss mute.
+    /// Owns all looping TrackChannels and applies pose-driven modulations every
+    /// frame (SPEC §9.1–§9.3). Responds to GameManager state changes for the
+    /// intro gain ramp and tracking-loss mute.
     /// All modulation is 2D — no positional audio.
     /// No heap allocations in Update.
     ///
-    /// One track is marked IsStatic on its TrackChannel (the drone/foundation layer).
-    /// It receives only base gain + tracking-loss mute — no LPF, no pan, no tilt.
-    /// The other three tracks receive all four mappings, each with individual
+    /// Tracks: track_voice, track_canopy, track_birds1, track_birds2 (spatialized);
+    ///         track_river (static bed — IsStatic=true on its TrackChannel).
+    /// Static tracks receive only base gain + tracking-loss mute — no LPF, no pan, no tilt.
+    /// Spatialized tracks receive all four mappings, each with individual
     /// LpfSensitivity and PanWidth so their spatial and timbral behaviour is distinct.
     /// Spatial (pan) is the primary expressive axis.
     /// </summary>
@@ -34,8 +35,8 @@ namespace AquiFuturo.Audio
 
         private void Awake()
         {
-            if (_tracks == null || _tracks.Length != 4)
-                Debug.LogError("[TrackMixer] Exactly 4 TrackChannel references required (SPEC §9.1).");
+            if (_tracks == null || _tracks.Length == 0)
+                Debug.LogError("[TrackMixer] No TrackChannel references assigned — wire all tracks in the Inspector.");
         }
 
         private void Start()
@@ -77,7 +78,7 @@ namespace AquiFuturo.Audio
         // ── Public API ────────────────────────────────────────────────────
 
         /// <summary>
-        /// Schedules all four tracks to start at the same DSP time (SPEC §9.2).
+        /// Schedules all tracks to start at the same DSP time (SPEC §9.2).
         /// The 0.2 s margin ensures dspTime is never in the past when this runs late.
         /// </summary>
         public void StartScheduled()
@@ -122,8 +123,8 @@ namespace AquiFuturo.Audio
 
                 if (ch.IsStatic)
                 {
-                    // Static track (drone/foundation): fully open filter, centred pan,
-                    // base gain only. Provides a stable anchor while the other three move.
+                    // Static track (track_river/bed): fully open filter, centred pan,
+                    // base gain only. Provides a stable anchor while the spatialized tracks move.
                     ch.SetCutoffHz(_audioConfig.cutoffMaxHz);
                     ch.SetPan(0f);
                     float staticDb     = Mathf.Clamp(ch.BaseGainDb, _audioConfig.gainMinDb, _audioConfig.gainMaxDb);
