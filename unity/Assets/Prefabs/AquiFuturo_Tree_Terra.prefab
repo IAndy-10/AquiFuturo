@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 1574859385148722196}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -45.177998, y: -239, z: -251}
+  m_LocalPosition: {x: -45.177998, y: -239, z: 5}
   m_LocalScale: {x: 152.3901, y: 152.3901, z: 152.3901}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -53,8 +53,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 5.7261662, y: 1.9307224, z: 5.241188}
-  m_Center: {x: 0.5182624, y: -0.7696619, z: 1.6356161}
+  m_Size: {x: 1.3970302, y: 1.3337008, z: 1.9950048}
+  m_Center: {x: 0.4054185, y: -0.51420736, z: 1.3300875}
 --- !u!82 &7084259314234214736
 AudioSource:
   m_ObjectHideFlags: 0
@@ -193,7 +193,7 @@ Transform:
   m_GameObject: {fileID: 2106419556766596913}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -45.177998, y: -129, z: -251}
+  m_LocalPosition: {x: -56.8, y: -129, z: -251}
   m_LocalScale: {x: 152.3901, y: 152.3901, z: 152.3901}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -218,8 +218,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 5.7261662, y: 0.6386423, z: 5.241188}
-  m_Center: {x: 0.5182624, y: -0.123622, z: 1.6356161}
+  m_Size: {x: 0.44698706, y: 0.6386423, z: 0.74385655}
+  m_Center: {x: 0.3532881, y: -0.123622, z: 1.7650348}
 --- !u!82 &4642039583306176499
 AudioSource:
   m_ObjectHideFlags: 0
@@ -390,7 +390,7 @@ Transform:
   m_GameObject: {fileID: 5903205423367455657}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -45.177998, y: 39, z: 98}
+  m_LocalPosition: {x: -45.177998, y: 39, z: 84}
   m_LocalScale: {x: 152.3901, y: 152.3901, z: 152.3901}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -415,8 +415,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.1221085, y: 0.87637776, z: 2.112599}
-  m_Center: {x: -0.56105435, y: -0.28052717, z: 0.72746867}
+  m_Size: {x: 1.3201652, y: 0.49732625, z: 1.029595}
+  m_Center: {x: -0.96202534, y: -0.24262202, z: 0.68414813}
 --- !u!82 &4869704156752626201
 AudioSource:
   m_ObjectHideFlags: 0
@@ -580,8 +580,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 5.003453, y: 0.9809807, z: 2.1506364}
-  m_Center: {x: 0.8796197, y: -0.33282873, z: 0.7464876}
+  m_Size: {x: 0.5874036, y: 0.98098063, z: 0.39162296}
+  m_Center: {x: 0.3102552, y: -0.33282876, z: 1.625994}
 --- !u!82 &398220603469267591
 AudioSource:
   m_ObjectHideFlags: 0
@@ -795,6 +795,10 @@ PrefabInstance:
     - target: {fileID: 5060581231351853595, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
       propertyPath: m_Layer
       value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5060581231351853595, guid: 73c18bb3a3d5a44c8a5dc5fc2b317661, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
