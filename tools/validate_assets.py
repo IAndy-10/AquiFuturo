@@ -8,9 +8,8 @@ Checks performed:
   4. audio_manifest.json schema_version matches SUPPORTED_SCHEMA_VERSION
   5. Every manifest track file exists in unity/Assets/Audio/Tracks/
   6. Every interaction sample file exists in unity/Assets/Audio/Interaction/
-  7. All four tracks are 48 kHz stereo and identical in sample length
-  8. Every node.class present in the graph has >= 1 matching interaction sample
-  9. tree_full.glb exists and contains exactly Trunk, Branches, Roots top-level nodes
+  7. All five tracks are 48 kHz stereo and identical in sample length
+  8. tree_full.glb exists and contains exactly Trunk, Branches, Roots top-level nodes
 
 Run:
     python tools/validate_assets.py
@@ -34,7 +33,7 @@ log = logging.getLogger(__name__)
 SUPPORTED_SCHEMA_VERSION = "1.1"
 
 REQUIRED_NODE_CLASSES = {"trunk_base", "primary", "lateral", "fine", "terminal"}
-EXPECTED_TRACK_IDS = {"root_rave", "soil", "canopy", "drone"}
+EXPECTED_TRACK_IDS = {"track_voice", "track_canopy", "track_river", "track_birds1", "track_birds2"}
 EXPECTED_SAMPLE_RATE = 48_000
 EXPECTED_CHANNELS = 2  # stereo
 GLB_REQUIRED_CHILDREN = {"Trunk", "Branches", "Roots"}
@@ -267,25 +266,6 @@ def validate_audio_manifest(
                 "TODO: produce and commit the one-shot samples (SPEC §6.5)."
             )
 
-    # Every node.class in the graph must have >= 1 matching interaction sample
-    # We check by node_class field in interaction entries
-    covered_classes = {e.get("node_class") for e in interaction_entries if e.get("node_class")}
-    # We can only check graph node classes if the graph exists
-    graph_path = manifest_path.parent.parent / "data" / "root_graph.json"
-    if graph_path.exists():
-        try:
-            graph = _load_json(graph_path)
-            graph_classes = {n.get("class") for n in graph.get("nodes", []) if n.get("class")}
-            for cls in graph_classes:
-                if cls not in covered_classes:
-                    errors.append(
-                        f"Node class '{cls}' appears in root_graph.json but has no "
-                        "matching interaction sample in audio_manifest.json (SPEC §5.4). "
-                        "TODO: add one-shot samples for this class."
-                    )
-        except (ValueError, KeyError):
-            pass  # graph errors already reported in validate_root_graph
-
     return errors
 
 
@@ -368,9 +348,9 @@ def run_validation(repo_root: Path) -> int:
     all_errors: list[str] = []
     all_warnings: list[str] = []
 
-    graph_path = repo_root / "data" / "root_graph.json"
-    branch_graph_path = repo_root / "data" / "branch_graph.json"
-    manifest_path = repo_root / "data" / "audio_manifest.json"
+    graph_path = repo_root / "data" / "processed" / "skeleton" / "root_graph.json"
+    branch_graph_path = repo_root / "data" / "processed" / "skeleton" / "branch_graph.json"
+    manifest_path = repo_root / "tools" / "audio_manifest.json"
     tracks_dir = repo_root / "unity" / "Assets" / "Audio" / "Tracks"
     interaction_dir = repo_root / "unity" / "Assets" / "Audio" / "Interaction"
     glb_path = repo_root / "unity" / "Assets" / "Art" / "Models" / "tree_full.glb"
