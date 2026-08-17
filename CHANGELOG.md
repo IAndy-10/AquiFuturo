@@ -7,6 +7,13 @@ Format: `<type>: <description>` — one line per milestone entry.
 
 ## Unreleased
 
+- feat: zone-based interaction — 4 Box Collider zones (G1–G4) replace node-class RootInteraction; ZoneTrigger + ZoneInteraction scripts; RAVE zone clips (rave_zone1–4.wav) triggered on tap; pan driven by screen X
+- feat: 5-track audio system — track_voice, track_canopy, track_river, track_birds1, track_birds2 replace old 4-track set; track_river is static bed (no modulation); all tracks 48 kHz stereo 120 s phase-locked
+- fix: 20 ms raised-cosine fade-in/out on all looping tracks eliminates loop-point click
+- fix: ZoneTrigger uses RequireComponent(AudioSource) — clip visible in Inspector; removes runtime-created AudioSource child
+- fix: ZoneInteraction _startImmediatelyForTesting bypass for testing without AR placement flow
+- docs: update SPEC §5.2–§5.4 §8 §9 §10 — 5-track manifest, FBX model requirements, manual placement, zone interaction
+- docs: update README, STATUS — M1–M3 done, M4 in progress on feat/polish-and-ui
 - feat: strike_tour excitation — replace broken tour_sweep (Gaussian envelope, quasi-static DC, ~110 dB below target band) with broadband click strike train; tree_to_wav.py gains --mode-tilt, --listen-sum abs, --highpass, --normalize rms
 - feat: branch_synth.py — per-branch-class modal synthesis (trunk_base 20–120 Hz → terminal 1500–8000 Hz), per-class RMS levelling, A-weighted audibility report, --save-parts; all five classes audible in v4 renders
 - feat: RAVE pipeline — pca_rave.py (TSP tour → PCA latent → WAV), split_roots.py (4-zone skeleton split), per-zone root_graph_g1–g4.json; data layout restructured to data/raw/ + data/processed/

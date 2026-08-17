@@ -2,7 +2,9 @@
 
 iOS Augmented Reality prototype for an MAT M.S. thesis (UC Santa Barbara, 2026).
 
-The app places a virtual twin of a real tree in AR and reveals its underground root system alongside a four-track soundscape that responds to how the user moves and where they touch the roots. One audio track — the *root voice* — is produced offline by an unsupervised cross-domain manifold alignment: root skeleton graph traversals (TSP tour) become trajectories through a RAVE latent space, decoded into audio. The remaining tracks are conventionally designed. The app is the interaction and mixing layer over those stems.
+The app places a virtual underground root system in AR and reveals it alongside a five-track soundscape that responds to how the user moves and where they touch. One audio track — the *root voice* — is produced offline by an unsupervised cross-domain manifold alignment: root skeleton graph traversals (TSP tour) become trajectories through a RAVE latent space, decoded into audio. Interaction zone clips are also RAVE-generated, one per spatial root zone. The remaining tracks are conventionally designed. The app is the interaction and mixing layer over those stems.
+
+The root system is displayed alone (no above-ground tree model). Placement is manual: the user points the phone near the real tree trunk and taps to fix the root system at that position.
 
 Target audience: ~20 participants, outdoors, using their own iPhones and headphones.
 
@@ -15,27 +17,38 @@ aquifuturo-ar/
 ├── SPEC.md                  # single source of truth — read this first
 ├── CLAUDE.md                # Claude Code working agreement
 ├── CHANGELOG.md
+├── STATUS.md
 ├── tools/
-│   ├── skeletonize.py       # mesh → root_graph.json (SPEC §6.4)
+│   ├── graph_builder.py     # Blender-native skeleton → root_graph.json
+│   ├── split_roots.py       # skeleton → 4 spatial zone skeletons
+│   ├── tree_to_wav.py       # modal synthesis from branch_graph.json
+│   ├── branch_synth.py      # per-class modal synthesis
+│   ├── pca_rave.py          # TSP tour → PCA latent → WAV (RAVE pipeline)
+│   ├── audio_manifest.json  # track + interaction clip registry
 │   ├── validate_assets.py   # CI asset validator (SPEC §5)
 │   └── requirements.txt
 ├── data/
-│   ├── root_graph.json      # extracted root skeleton (schema v1.1)
-│   └── branch_graph.json    # extracted branch skeleton (schema v1.1)
-├── assets_src/              # Git LFS: .ply, .blend, raw capture — not shipped
-├── docs/
-│   ├── blender_session.md
-│   ├── unity_session.md
-│   ├── field_protocol.md
-│   └── decisions/           # ADRs
+│   ├── processed/
+│   │   ├── skeleton/        # root_graph.json, branch_graph.json, zone graphs g1–g4
+│   │   └── audio/           # 5 looping tracks + 4 rave zone clips (48 kHz stereo)
+│   └── raw/                 # raw audio stems before resampling
+├── assets_src/
+│   ├── zones/               # per-zone skeleton JSONs (split_roots.py output)
+│   └── audio/               # source audio files (Git LFS)
 └── unity/
-    └── Assets/Scripts/
-        ├── Core/            # GameManager, AppState, SessionLogger
-        ├── Placement/       # TreePlacement, TreeAdjuster
-        ├── Graph/           # RootGraph, RootGraphLoader, SpatialHash
-        ├── Audio/           # TrackMixer, PoseAnalyzer, TrackChannel
-        ├── Interaction/     # RootInteraction, ParticleSpawner
-        └── UI/              # HudController
+    └── Assets/
+        ├── Art/Models/      # AquiFuturo_RootA.fbx, AquiFuturo_RootB.fbx, AquiFuturo_Trunk.fbx
+        ├── Audio/
+        │   ├── Tracks/      # 5 × looping WAV (48 kHz stereo, 120 s)
+        │   └── Interaction/ # 4 × RAVE zone clips
+        ├── Prefabs/         # AquiFuturo_Tree_Terra.prefab
+        └── Scripts/
+            ├── Core/        # GameManager, AppState, SessionLogger
+            ├── Placement/   # TreePlacement, TreeAdjuster
+            ├── Graph/       # RootGraph, RootGraphLoader, SpatialHash
+            ├── Audio/       # TrackMixer, PoseAnalyzer, TrackChannel
+            ├── Interaction/ # ZoneInteraction, ZoneTrigger, ParticleSpawner
+            └── UI/          # HudController
 ```
 
 ---
@@ -119,32 +132,34 @@ main  ←  dev  ←  feat/<short-name>
 
 | ID | Status | Description |
 |---|---|---|
-| M0 | ✅ done | Repo + contracts, validator, CLAUDE.md, all 19 C# scripts imported by Unity |
-| M1 | ✅ done | Placeholder cylinder placeable in AR, anchored, four placeholder tracks sample-synced with working LPF and pan responding to phone movement |
-| M2 | ✅ done | Real tree assets — `root_graph.json` + `branch_graph.json` produced ✅; roots FBX imported ✅ (branches used for geometry/audio extraction only, no Unity model needed) |
-| M3 | ⬜ | Audio complete: four final tracks, all pose mappings, outdoor mix tuning |
-| M4 | ⬜ | Interaction + polish: raycast, particles, root fade, HUD, reset |
+| M0 | ✅ done | Repo + contracts, validator, CLAUDE.md, all C# scripts imported by Unity |
+| M1 | ✅ done | Root system visible in AR on device; five tracks sample-synced with working LPF and pan |
+| M2 | ✅ done | Real root FBX models in Unity; `root_graph.json` + zone graphs produced; modal synthesis + RAVE pipeline complete |
+| M3 | ✅ done | Five final tracks (48 kHz, 120 s, stereo); RAVE zone clips; all pose mappings; zone interaction audio working |
+| M4 | 🔄 in progress | Polish + UI: particle visual feedback, root fade shader, HUD, reset — `feat/polish-and-ui` |
 | M5 | ⬜ | Instrumentation + hardening: SessionLogger CSV, 20-min soak |
 | M6 | ⬜ | Field readiness: IRB, TestFlight live, 3 pilot sessions |
 
-### What's done on `main`
+### What's done on `dev`
 
 | Area | State |
 |---|---|
 | Repo scaffold, `.gitignore`, `.gitattributes`, Git LFS | ✅ |
-| `validate_assets.py` — all checks, PASS with 2 TODOs | ✅ |
-| `tools/skeletonize.py` — mesh → `root_graph.json` (SPEC §6.4) | ✅ |
-| `tools/graph_builder.py` — Blender-native skeleton extraction | ✅ |
-| `data/root_graph.json` + `data/branch_graph.json` | ✅ |
-| 19 C# scripts across Core / Audio / Placement / Graph / Interaction / UI | ✅ |
+| `validate_assets.py` — schema, node/edge integrity, audio parity | ✅ |
+| `tools/graph_builder.py` + `split_roots.py` — skeleton extraction, 4-zone split | ✅ |
+| `tools/tree_to_wav.py` + `branch_synth.py` — modal synthesis pipeline | ✅ |
+| `tools/pca_rave.py` — TSP tour → PCA latent → RAVE zone WAVs | ✅ |
+| `data/processed/skeleton/` — root_graph.json + branch_graph.json + zone graphs g1–g4 | ✅ |
+| `tools/audio_manifest.json` — 5-track + 4-zone interaction registry | ✅ |
+| C# scripts: Core / Audio / Placement / Graph / Interaction / UI | ✅ |
 | 4 ScriptableObject config classes (no magic numbers) | ✅ |
-| Unity project open, packages installed, scripts imported (.meta files present) | ✅ |
-| Unity scene assembled (manual, guided by Claude Code) | ❌ pending |
-| `data/audio_manifest.json` | ❌ pending |
-| Roots FBX (`AquiFuturo_RootA`) imported into Unity | ✅ |
-| Audio tracks (4 × WAV, 48 kHz stereo, identical length) | ❌ pending |
-| `tools/render_latent_audio.py` — RAVE offline decode driver | ❌ pending |
-| TestFlight placeholder build submitted | ❌ pending |
+| Unity scene assembled (AquiFuturo_Tree_Terra prefab, zones, TrackMixer) | ✅ |
+| Root FBX models imported (`AquiFuturo_RootA`, `RootB`, `Trunk`) | ✅ |
+| 5 looping tracks — 48 kHz stereo, 120 s, phase-locked via `PlayScheduled()` | ✅ |
+| 4 RAVE interaction zone clips (`rave_zone1–4.wav`) | ✅ |
+| Zone-based tap interaction (4 × Box Collider + `ZoneTrigger` + `ZoneInteraction`) | ✅ |
+| Pose-driven modulation confirmed: LPF, pan, tilt, distance | ✅ |
+| TestFlight build submitted | ❌ pending |
 
 See SPEC.md §17 for full acceptance criteria per milestone.
 
@@ -153,7 +168,7 @@ See SPEC.md §17 for full acceptance criteria per milestone.
 ## Key conventions
 
 - **Coordinate system:** 1 unit = 1 metre. Tree origin at trunk base, ground level. `y > 0` = trunk/branches, `y < 0` = roots.
-- **Audio:** Four looping stereo tracks, 2D (`spatialBlend = 0`), sample-synced via `PlayScheduled()`. Modulation via LPF cutoff (logarithmic Hz), stereo pan, and volume — driven by pose axes relative to the placed tree (SPEC §9.3). No 3D spatialisation.
+- **Audio:** Five looping stereo tracks, 2D (`spatialBlend = 0`), sample-synced via `PlayScheduled()`. Modulation via LPF cutoff (logarithmic Hz), stereo pan, and volume — driven by pose axes relative to the placed tree (SPEC §9.3). `track_river` is a static bed (no modulation). No 3D spatialisation. Interaction taps on zone Box Colliders trigger RAVE zone clips (`rave_zone1–4.wav`).
 - **No magic numbers:** every tunable lives in a ScriptableObject config.
 - **No `GameObject.Find`:** all wiring is through the Inspector or Bootstrap component.
 
