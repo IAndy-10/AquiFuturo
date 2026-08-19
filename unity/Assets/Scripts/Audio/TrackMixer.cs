@@ -95,6 +95,36 @@ namespace AquiFuturo.Audio
             }
 
             _started = true;
+
+            // On iOS the AVAudioSession may not be active on first launch, causing
+            // PlayScheduled to be silently dropped. Verify playback started and
+            // reschedule if not (SPEC §9.2, AR silent failure rule §4).
+            StartCoroutine(EnsurePlaybackStarted());
+        }
+
+        private System.Collections.IEnumerator EnsurePlaybackStarted()
+        {
+            // Wait past the scheduled start time before checking.
+            float wait = (_audioConfig != null ? (float)_audioConfig.scheduleMarginSeconds : 0.2f) + 0.3f;
+            yield return new WaitForSecondsRealtime(wait);
+
+            if (!_started || _tracks == null || _audioConfig == null) yield break;
+
+            bool anyPlaying = false;
+            foreach (var track in _tracks)
+            {
+                if (track?.Source != null && track.Source.isPlaying) { anyPlaying = true; break; }
+            }
+
+            if (anyPlaying) yield break;
+
+            Debug.LogWarning("[TrackMixer] No tracks playing after scheduled start — iOS audio session was likely inactive. Rescheduling.");
+            double retry = AudioSettings.dspTime + _audioConfig.scheduleMarginSeconds;
+            foreach (var track in _tracks)
+            {
+                if (track?.Source == null) continue;
+                track.Source.PlayScheduled(retry);
+            }
         }
 
         // ── Private ───────────────────────────────────────────────────────

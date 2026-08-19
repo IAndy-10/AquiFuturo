@@ -20,6 +20,12 @@ namespace AquiFuturo.Core
         [Tooltip("Maximum uniform scale multiplier from pinch gesture.")]
         public float scaleMax = 2.0f;
 
+        [Header("Root System Position")]
+        [Tooltip("Vertical offset applied to the root system after placement. " +
+                 "Negative values move it below the detected surface (into the ground). " +
+                 "Tune this in PlacementSettings.asset.")]
+        public float rootDepthOffsetM = 0f;
+
         [Header("Fallback Placement (SPEC §8.1)")]
         [Tooltip("Distance forward from camera when placing without a detected plane.")]
         public float fallbackDistanceM = 2.0f;

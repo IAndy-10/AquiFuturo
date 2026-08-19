@@ -170,7 +170,9 @@ namespace AquiFuturo.Placement
                 ? Instantiate(_treePrefab)
                 : CreatePlaceholderCylinder();
 
-            _treeInstance.transform.SetPositionAndRotation(pose.position, pose.rotation);
+            float depthOffset = _config != null ? _config.rootDepthOffsetM : 0f;
+            Vector3 placedPos = pose.position + Vector3.up * depthOffset;
+            _treeInstance.transform.SetPositionAndRotation(placedPos, pose.rotation);
             _placed = true;
 
             _poseAnalyzer?.SetTreeBase(_treeInstance.transform);

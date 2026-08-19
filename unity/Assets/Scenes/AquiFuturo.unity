@@ -2057,6 +2057,7 @@ MonoBehaviour:
   _instructionText: {fileID: 508291124}
   _preLocateGroup: {fileID: 824786717}
   _postLocateGroup: {fileID: 1517487867}
+  _arCameraBackground: {fileID: 1047131514}
   _background: {fileID: 1729687248}
   _particleContainer: {fileID: 1927898360}
   _particleSprite: {fileID: 0}

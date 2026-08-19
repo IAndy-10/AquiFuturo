@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using AquiFuturo.Core;
 using AquiFuturo.Placement;
+using UnityEngine.XR.ARFoundation;
 
 namespace AquiFuturo.UI
 {
@@ -41,6 +42,10 @@ namespace AquiFuturo.UI
         [Header("AR Overlay Groups")]
         [SerializeField] private GameObject _preLocateGroup;   // shown before roots placed
         [SerializeField] private GameObject _postLocateGroup;  // shown after roots placed
+
+        [Header("AR Camera")]
+        [Tooltip("ARCameraBackground on the AR camera. Disabled during Menu/Instructions so the feed is fully hidden.")]
+        [SerializeField] private ARCameraBackground _arCameraBackground;
 
         [Header("Background")]
         [Tooltip("Full-screen background Image shown during Menu and Instructions only. Hidden during AR states.")]
@@ -195,8 +200,10 @@ namespace AquiFuturo.UI
             SetPanel(_instructionsPanel, isInstr);
             SetPanel(_arPanel,           isAr);
 
-            // Background and particles only on menu / instructions
+            // Background, particles, and camera feed: cover blocks camera during menu/instructions
             bool showCover = isMenu || isInstr;
+            if (_arCameraBackground != null)
+                _arCameraBackground.enabled = !showCover;
             if (_background != null)
                 _background.SetActive(showCover);
             if (_particleContainer != null)
