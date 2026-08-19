@@ -32,8 +32,8 @@ namespace AquiFuturo.UI
         [Header("Instruction Step Dots (3 Images)")]
         [SerializeField] private Image[] _stepDots;            // length 3
 
-        [Header("Instruction Illustrations (3 Images — assign sprites here)")]
-        [SerializeField] private Image[] _illustrationImages;  // length 3
+        [Header("Instruction Illustrations (3 GameObjects — one per card)")]
+        [SerializeField] private GameObject[] _illustrationImages;  // length 3
 
         [Header("Instruction Body Text")]
         [SerializeField] private TMP_Text _instructionText;
@@ -41,6 +41,10 @@ namespace AquiFuturo.UI
         [Header("AR Overlay Groups")]
         [SerializeField] private GameObject _preLocateGroup;   // shown before roots placed
         [SerializeField] private GameObject _postLocateGroup;  // shown after roots placed
+
+        [Header("Background")]
+        [Tooltip("Full-screen background Image shown during Menu and Instructions only. Hidden during AR states.")]
+        [SerializeField] private GameObject _background;
 
         [Header("Particles")]
         [Tooltip("Empty RectTransform inside the Menu panel. Particles are spawned here.")]
@@ -58,7 +62,7 @@ namespace AquiFuturo.UI
         {
             "Find a tree that you like and get closer to its trunk. Ideally touch the tree to ensure that you are in the correct distance.",
             "Keep your cellphone at a normal height, like the one you normally chat, and change the angle pointing the root of the tree.",
-            "Click in the \"Click to locate the roots\" button. After this you're going to see the root system under your tree. Take some steps back to improve the experience. You can touch the roots to trigger sounds and move the cellphone to fill the audio spatialization effect."
+            "Press \"Click to locate the roots\". Step back to see the full root system. Touch the roots to trigger sounds and move the phone to explore the spatial audio."
         };
 
         private AudioSource _audioSource;
@@ -191,9 +195,12 @@ namespace AquiFuturo.UI
             SetPanel(_instructionsPanel, isInstr);
             SetPanel(_arPanel,           isAr);
 
-            // Particles only on menu / instructions
+            // Background and particles only on menu / instructions
+            bool showCover = isMenu || isInstr;
+            if (_background != null)
+                _background.SetActive(showCover);
             if (_particleContainer != null)
-                _particleContainer.gameObject.SetActive(isMenu || isInstr);
+                _particleContainer.gameObject.SetActive(showCover);
 
             if (isInstr)
                 ShowStep(0);
@@ -221,7 +228,7 @@ namespace AquiFuturo.UI
                     _stepDots[i].color = (i <= _step) ? ColDotActive : ColDotInactive;
 
                 if (i < _illustrationImages.Length && _illustrationImages[i] != null)
-                    _illustrationImages[i].gameObject.SetActive(i == _step);
+                    _illustrationImages[i].SetActive(i == _step);
             }
         }
 
