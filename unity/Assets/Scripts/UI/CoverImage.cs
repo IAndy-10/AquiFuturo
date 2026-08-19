@@ -22,6 +22,11 @@ namespace AquiFuturo.UI
         [Tooltip("Corner radius in Canvas pixels. Only used when shader is assigned.")]
         private float _cornerRadius = 24f;
 
+        [SerializeField]
+        [Range(0.1f, 3f)]
+        [Tooltip("1 = fill frame exactly. >1 zooms in (crops more). <1 zooms out (shows more texture).")]
+        private float _cropZoom = 1f;
+
         private RawImage      _rawImage;
         private RectTransform _rt;
         private Material      _material;
@@ -85,6 +90,13 @@ namespace AquiFuturo.UI
                 v     = (1f - vSize) * 0.5f;
             }
 
+            // Apply zoom: scale UV window around its centre.
+            float invZoom = 1f / Mathf.Max(0.01f, _cropZoom);
+            uSize *= invZoom;
+            vSize *= invZoom;
+            u = (1f - uSize) * 0.5f;
+            v = (1f - vSize) * 0.5f;
+
             _rawImage.uvRect = new Rect(u, v, uSize, vSize);
 
             if (_material != null)
@@ -98,6 +110,14 @@ namespace AquiFuturo.UI
 
         // Defer Refresh by one frame so the VerticalLayoutGroup finishes
         // assigning children's heights before we read rect.width/height.
+        private void OnValidate()
+        {
+            // Fires in the Inspector (Edit and Play mode) when any field changes.
+            // Null-guard because Awake() hasn't run yet in Edit mode.
+            if (_rawImage == null || _rt == null) return;
+            Refresh();
+        }
+
         private void OnRectTransformDimensionsChange() => ScheduleRefresh();
 
         private void ScheduleRefresh()
