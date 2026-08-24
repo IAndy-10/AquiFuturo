@@ -7,6 +7,7 @@ Format: `<type>: <description>` — one line per milestone entry.
 
 ## Unreleased
 
+- docs: update SPEC §2.2 §4 §5 §6.5 §7 §10 §14 §15 Appendix C — replace stale per-node interaction (RootInteraction, InteractionAudioPool, hit_<nodeclass>) with zone-based system; update track names to five-track set; fix bootstrap hierarchy and session wiring notes
 - feat: zone-based interaction — 4 Box Collider zones (G1–G4) replace node-class RootInteraction; ZoneTrigger + ZoneInteraction scripts; RAVE zone clips (rave_zone1–4.wav) triggered on tap; pan driven by screen X
 - feat: 5-track audio system — track_voice, track_canopy, track_river, track_birds1, track_birds2 replace old 4-track set; track_river is static bed (no modulation); all tracks 48 kHz stereo 120 s phase-locked
 - fix: 20 ms raised-cosine fade-in/out on all looping tracks eliminates loop-point click
