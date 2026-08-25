@@ -18,5 +18,9 @@ namespace AquiFuturo.Core
 
         [Tooltip("Pitch variation range in semitones for interaction one-shots.")]
         public float pitchVarSemitones = 2f;
+
+        [Tooltip("Master gain in dB applied to all zone interaction one-shots. " +
+                 "Lower this to reduce interaction volume relative to the soundtrack.")]
+        public float interactionGainDb = -12f;
     }
 }

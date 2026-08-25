@@ -41,6 +41,10 @@ namespace AquiFuturo.Core
         public float gainMinDb = -24f;
         public float gainMaxDb =   0f;
 
+        [Tooltip("Global dB offset added to every soundtrack track before clamping. " +
+                 "Raise this to lift all looping tracks relative to interaction one-shots.")]
+        public float masterGainDb = 0f;
+
         [Header("Startup")]
         [Tooltip("DSP scheduling margin in seconds (SPEC §9.2). Never set below 0.1.")]
         public double scheduleMarginSeconds = 0.2;

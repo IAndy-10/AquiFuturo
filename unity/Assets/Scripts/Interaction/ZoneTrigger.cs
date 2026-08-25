@@ -1,4 +1,5 @@
 using UnityEngine;
+using AquiFuturo.Core;
 
 namespace AquiFuturo.Interaction
 {
@@ -14,6 +15,7 @@ namespace AquiFuturo.Interaction
     public sealed class ZoneTrigger : MonoBehaviour
     {
         [SerializeField] private int _zoneId;
+        [SerializeField] private InteractionSettingsConfig _config;
 
         private AudioSource _source;
 
@@ -37,9 +39,13 @@ namespace AquiFuturo.Interaction
                 return;
             }
             _source.panStereo = Mathf.Clamp(pan, -1f, 1f);
+
+            float gainDb = _config != null ? _config.interactionGainDb : -12f;
+            _source.volume = Mathf.Pow(10f, gainDb / 20f);
+
             _source.Stop();
             _source.Play();
-            Debug.Log($"[ZoneTrigger] Zone {_zoneId} triggered — pan={pan:F2}");
+            Debug.Log($"[ZoneTrigger] Zone {_zoneId} triggered — pan={pan:F2} gain={gainDb:F1} dB");
         }
     }
 }

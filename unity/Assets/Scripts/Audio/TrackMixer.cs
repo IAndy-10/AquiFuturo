@@ -157,7 +157,8 @@ namespace AquiFuturo.Audio
                     // base gain only. Provides a stable anchor while the spatialized tracks move.
                     ch.SetCutoffHz(_audioConfig.cutoffMaxHz);
                     ch.SetPan(0f);
-                    float staticDb     = Mathf.Clamp(ch.BaseGainDb, _audioConfig.gainMinDb, _audioConfig.gainMaxDb);
+                    float staticDb     = Mathf.Clamp(ch.BaseGainDb + _audioConfig.masterGainDb,
+                                                     _audioConfig.gainMinDb, _audioConfig.gainMaxDb);
                     ch.Source.volume   = Mathf.Pow(10f, staticDb / 20f) * _muteGain;
                     continue;
                 }
@@ -181,8 +182,8 @@ namespace AquiFuturo.Audio
                 // TiltBias -1 = underground (louder when phone points down, tilt < 0).
                 float tiltGainDb = _audioConfig.tiltGainRangeDb * (ch.TiltBias * tilt);
 
-                // Mapping 4: sum base + tilt + distance, clamp, convert, mute.
-                float totalDb    = ch.BaseGainDb + tiltGainDb + distGainDb;
+                // Mapping 4: sum base + tilt + distance + master offset, clamp, convert, mute.
+                float totalDb    = ch.BaseGainDb + tiltGainDb + distGainDb + _audioConfig.masterGainDb;
                 totalDb          = Mathf.Clamp(totalDb, _audioConfig.gainMinDb, _audioConfig.gainMaxDb);
                 ch.Source.volume = Mathf.Pow(10f, totalDb / 20f) * _muteGain;
             }

@@ -65,14 +65,15 @@ namespace AquiFuturo.UI
 
         private static readonly string[] InstructionTexts =
         {
-            "Find a tree that you like and get closer to its trunk. Ideally touch the tree to ensure that you are in the correct distance.",
-            "Keep your cellphone at a normal height, like the one you normally chat, and change the angle pointing the root of the tree.",
-            "Press \"Click to locate the roots\". Step back to see the full root system. Touch the roots to trigger sounds and move the phone to explore the spatial audio."
+            "Find a tree you like and move close to its trunk. You can touch the bark to make sure you are at the right distance.",
+            "Hold your phone at a comfortable height — like when you are texting — then tilt it downward toward the base of the tree.",
+            "Press \"Click to locate the roots\". Step back to see the full root system. Touch the roots to trigger sounds, and move the phone to explore the spatial audio."
         };
 
         private AudioSource _audioSource;
-        private int  _step;
-        private bool _transitioning;
+        private int      _step;
+        private bool     _transitioning;
+        private Coroutine _testFadeCoroutine;
 
         // ── Unity lifecycle ───────────────────────────────────────────────
 
@@ -124,8 +125,13 @@ namespace AquiFuturo.UI
                 Debug.LogWarning("[MenuController] Test audio clip not assigned in UISettings.");
                 return;
             }
-            if (_audioSource.isPlaying) _audioSource.Stop();
-            _audioSource.PlayOneShot(_config.testAudioClip);
+
+            if (_testFadeCoroutine != null) StopCoroutine(_testFadeCoroutine);
+            _audioSource.Stop();
+            _audioSource.volume = 1f;
+            _audioSource.clip   = _config.testAudioClip;
+            _audioSource.Play();
+            _testFadeCoroutine = StartCoroutine(FadeOutTestAudio(_config.testAudioClip.length));
         }
 
         /// <summary>Leave a Comment — opens the Google Form URL.</summary>
@@ -192,7 +198,6 @@ namespace AquiFuturo.UI
             bool isMenu  = state == AppState.Menu;
             bool isInstr = state == AppState.Instructions;
             bool isAr    = state == AppState.Placing ||
-                           state == AppState.PlacingFallback ||
                            state == AppState.Adjusting ||
                            state == AppState.Experiencing;
 
@@ -237,6 +242,29 @@ namespace AquiFuturo.UI
                 if (i < _illustrationImages.Length && _illustrationImages[i] != null)
                     _illustrationImages[i].SetActive(i == _step);
             }
+        }
+
+        // ── Test audio fade-out ───────────────────────────────────────────
+
+        private const float TestAudioFadeDuration = 2f;
+
+        private IEnumerator FadeOutTestAudio(float clipLength)
+        {
+            float fadeStart = clipLength - TestAudioFadeDuration;
+            if (fadeStart > 0f)
+                yield return new WaitForSecondsRealtime(fadeStart);
+
+            float duration = Mathf.Min(TestAudioFadeDuration, clipLength);
+            float elapsed  = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                _audioSource.volume = Mathf.Lerp(1f, 0f, elapsed / duration);
+                yield return null;
+            }
+            _audioSource.Stop();
+            _audioSource.volume    = 1f;
+            _testFadeCoroutine = null;
         }
 
         // ── Curtain (fade through black) ──────────────────────────────────
