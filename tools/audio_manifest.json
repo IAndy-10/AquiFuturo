@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.1",
+  "loop_length_seconds": 120.0,
+  "tracks": [
+    {
+      "id": "track_voice",
+      "file": "track_voice.wav",
+      "role": "voice",
+      "base_gain_db": -4.0,
+      "tilt_bias": -1.0,
+      "spatialization": true,
+      "is_static": false
+    },
+    {
+      "id": "track_canopy",
+      "file": "track_canopy.wav",
+      "role": "canopy_texture",
+      "base_gain_db": -8.0,
+      "tilt_bias": 1.0,
+      "spatialization": true,
+      "is_static": false
+    },
+    {
+      "id": "track_river",
+      "file": "track_river.wav",
+      "role": "bed",
+      "base_gain_db": -10.0,
+      "tilt_bias": 0.0,
+      "spatialization": false,
+      "is_static": true
+    },
+    {
+      "id": "track_birds1",
+      "file": "track_birds1.wav",
+      "role": "birds_a",
+      "base_gain_db": -8.0,
+      "tilt_bias": 0.5,
+      "spatialization": true,
+      "is_static": false
+    },
+    {
+      "id": "track_birds2",
+      "file": "track_birds2.wav",
+      "role": "birds_b",
+      "base_gain_db": -10.0,
+      "tilt_bias": 0.5,
+      "spatialization": true,
+      "is_static": false
+    }
+  ],
+  "interaction": [
+    { "file": "rave_zone1.wav", "zone": 1 },
+    { "file": "rave_zone2.wav", "zone": 2 },
+    { "file": "rave_zone3.wav", "zone": 3 },
+    { "file": "rave_zone4.wav", "zone": 4 }
+  ]
+}

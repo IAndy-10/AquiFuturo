@@ -73,10 +73,9 @@ These are non-negotiable and apply across every executor. Violations here are th
 
 - Files and folders: `PascalCase` for Unity assets, `snake_case` for Python and data files.
 - GLB: single `tree_full.glb` with named children `Trunk`, `Branches`, `Roots`.
-- Audio tracks: `track_<name>.wav` (`track_root_rave.wav`, `track_soil.wav`, `track_canopy.wav`, `track_drone.wav`).
-- Interaction one-shots: `hit_<nodeclass>_<nn>.wav`.
-- Unity layers: `RootMesh` (dedicated layer, used for raycast filtering — do **not** raycast against Default).
-- Unity tags: `TreeRoot`, `RootNode`.
+- Audio tracks: `track_<name>.wav` (`track_voice.wav`, `track_canopy.wav`, `track_river.wav`, `track_birds1.wav`, `track_birds2.wav`).
+- Interaction zone clips: `rave_zone<N>.wav` (N = 1–4, one per spatial zone G1–G4).
+- Unity layers: `RootMesh` (FBX root meshes + MeshCollider); `InteractionZone` (four zone Box Colliders — zone interaction raycasts against this layer only, never Default).
 
 ### 2.3 Versioning
 
@@ -103,7 +102,7 @@ Lock these versions on day one and record them in `README.md`. Prevent version d
 
 ### 3.1 In scope (MVP)
 
-- AR plane detection and manual tree placement with rotation and scale adjustment
+- Manual root system placement: user points phone near the real tree trunk and taps to fix the virtual root system at that world position
 - Anchored virtual tree with underground root mesh
 - **Four-track flat audio mix**, sample-synced, looping continuously
 - Device-pose-driven modulation: low-pass filter, stereo pan, layer balance, distance gain (§9.3)
@@ -149,11 +148,11 @@ These are *not built* but the code must not make them impossible. Each gets a cl
 │                                               │ │
 │                                         RAVE decode (offline)
 │                                               │ │
-│                                        track_root_rave.wav
+│                                        track_voice.wav
 │                                               + │
-│                                        3 designed tracks  [ME]
+│                                        4 produced tracks  [ME]
 │                                               + │
-│                                        interaction one-shots
+│                                        rave_zone1–4.wav (interaction)
 │                                    ▼            ▼ │
 │                              tree_full.glb  Audio/│
 └──────────────────────┬───────────────────────────┘
@@ -164,15 +163,15 @@ These are *not built* but the code must not make them impossible. Each gets a cl
 │                                      │            │
 │                                 TreeInstance      │
 │                                 ├─ meshes         │
-│                                 ├─ RootGraph (parsed JSON, touch lookup only)
-│                                 └─ RootInteraction (raycast → nearest node)
-│                                       ├─ InteractionAudioPool
+│                                 ├─ RootGraph (parsed JSON)
+│                                 └─ ZoneInteraction (raycast → zone G1–G4)
+│                                       ├─ ZoneTrigger × 4 (RAVE one-shot)
 │                                       └─ ParticleSpawner
 │                                                   │
 │  PoseAnalyzer  ──► azimuth, alignment, tilt, distance
 │        │                                          │
 │        ▼                                          │
-│  TrackMixer (4 × AudioSource, spatialBlend = 0)   │
+│  TrackMixer (5 × AudioSource, spatialBlend = 0)   │
 │        ├─ per-track AudioLowPassFilter            │
 │        ├─ per-track panStereo                     │
 │        └─ per-track volume                        │
@@ -225,7 +224,7 @@ Produced by the Blender/Python skeletonization pipeline (§6.4). Consumed by Uni
       "method": "tsp_2opt",
       "node_sequence": [0, 3, 7, 12, 19],
       "total_length": 14.2,
-      "rendered_stem": "track_root_rave.wav"
+      "rendered_stem": "track_voice.wav"
     }
   ]
 }
@@ -239,66 +238,51 @@ Field notes:
 
 ### 5.2 `audio_manifest.json`
 
+Lives at `tools/audio_manifest.json`. Five looping tracks + four RAVE interaction zone clips:
+
 ```json
 {
   "schema_version": "1.1",
   "loop_length_seconds": 120.0,
   "tracks": [
-    {
-      "id": "root_rave",
-      "file": "track_root_rave.wav",
-      "role": "root_voice",
-      "base_gain_db": -4.0,
-      "tilt_bias": -1.0,
-      "provenance": "rave_decode:tsp_primary"
-    },
-    {
-      "id": "soil",
-      "file": "track_soil.wav",
-      "role": "texture",
-      "base_gain_db": -8.0,
-      "tilt_bias": -0.5,
-      "provenance": "field_recording"
-    },
-    {
-      "id": "canopy",
-      "file": "track_canopy.wav",
-      "role": "texture",
-      "base_gain_db": -10.0,
-      "tilt_bias": 1.0,
-      "provenance": "field_recording"
-    },
-    {
-      "id": "drone",
-      "file": "track_drone.wav",
-      "role": "bed",
-      "base_gain_db": -12.0,
-      "tilt_bias": 0.0,
-      "provenance": "designed"
-    }
+    { "id": "track_voice",   "file": "track_voice.wav",   "tilt_bias": -1.0, "spatialization": true,  "is_static": false },
+    { "id": "track_canopy",  "file": "track_canopy.wav",  "tilt_bias":  1.0, "spatialization": true,  "is_static": false },
+    { "id": "track_river",   "file": "track_river.wav",   "tilt_bias":  0.0, "spatialization": false, "is_static": true  },
+    { "id": "track_birds1",  "file": "track_birds1.wav",  "tilt_bias":  0.5, "spatialization": true,  "is_static": false },
+    { "id": "track_birds2",  "file": "track_birds2.wav",  "tilt_bias":  0.5, "spatialization": true,  "is_static": false }
   ],
   "interaction": [
-    { "file": "hit_lateral_01.wav", "node_class": "lateral", "pitch_var_semitones": 2.0 }
+    { "file": "rave_zone1.wav", "zone": 1 },
+    { "file": "rave_zone2.wav", "zone": 2 },
+    { "file": "rave_zone3.wav", "zone": 3 },
+    { "file": "rave_zone4.wav", "zone": 4 }
   ]
 }
 ```
 
-`tilt_bias` ∈ [−1, 1] places each track on the vertical axis: −1 = fully underground, +1 = fully canopy, 0 = always present. See §9.3.
+`tilt_bias` ∈ [−1, 1] places each track on the vertical axis: −1 = fully underground, +1 = fully canopy, 0 = always present. See §9.3. `is_static = true` tracks (track_river) receive no LPF, pan, or tilt modulation — they play at constant gain as a stable ambient bed.
 
-**All four tracks must be exactly `loop_length_seconds` long.** The validator enforces this to the sample.
+**All five tracks must be exactly `loop_length_seconds` long.** The validator enforces this to the sample.
 
-### 5.3 GLB requirements
+### 5.3 Model requirements
 
-- Single file `tree_full.glb` with top-level children named exactly `Trunk`, `Branches`, `Roots`.
-- Triangles only. No n-gons.
-- Budget: ≤ 60k tris total (§13).
-- Materials: one per child, unlit or simple lit, no textures required for MVP (vertex colour acceptable).
-- No animations, cameras, or lights in the GLB.
-- `Roots` must be manifold with no zero-area faces (mesh collider requirement).
+Three FBX files in `unity/Assets/Art/Models/`. Only the root models are displayed at runtime; the trunk is imported but currently not shown:
+
+| File | Purpose | Runtime layer |
+|---|---|---|
+| `AquiFuturo_RootA.fbx` | Primary root system mesh with MeshCollider | `RootMesh` |
+| `AquiFuturo_RootB.fbx` | Secondary root mesh | `RootMesh` |
+| `AquiFuturo_Trunk.fbx` | Trunk reference model (hidden at runtime in MVP) | — |
+
+The app displays the root system alone — no above-ground tree model is visible. This is a deliberate artistic decision: the experience reads as looking into the hidden underground volume beneath the real tree.
+
+Zone interaction uses four axis-aligned Box Colliders (not a MeshCollider) placed over the four spatial root zones (G1–G4). These live on the `InteractionZone` layer, separate from `RootMesh`. Visual polish (root fade shader, particle feedback) is planned for `feat/polish-and-ui`.
 
 ### 5.4 Validator `[CC]`
 
-`tools/validate_assets.py` — checks GLB structure; node/edge referential integrity in `root_graph.json`; that every manifest file exists in `Assets/Audio/`; that all node positions fall inside `bounds`; that all four tracks are 48 kHz and **identical in sample length**; that every `node.class` present in the graph has at least one matching interaction sample. Run in CI (§14.4) and before every Unity import.
+`tools/validate_assets.py` — checks node/edge referential integrity in `root_graph.json`; that every manifest track and interaction file exists in `Assets/Audio/`; that all node positions fall inside `bounds`; that all five tracks are 48 kHz stereo and **identical in sample length**. Run in CI (§14.4) and before every Unity import.
+
+> Note: the GLB validator (`tree_full.glb` check) is still present in the script but corresponds to a dropped asset. It will be removed in `feat/polish-and-ui`.
 
 ---
 
@@ -332,27 +316,30 @@ python tools/skeletonize.py \
 
 Responsibilities: mesh → point sample → skeleton → graph (k-NN and/or Delaunay) → prune → node classification → TSP tour → JSON emit conforming to §5.1.
 
-Note that in v1.1 the graph has **two consumers**: the offline latent traversal (which produces `track_root_rave.wav`) and the runtime touch lookup (which selects one-shots by node class). Emitter selection is no longer needed.
+Note that in v1.1 the graph has **two consumers**: the offline latent traversal (which produces `track_voice.wav`) and the zone spatial split (see `tools/split_roots.py`). Runtime per-node touch lookup is no longer used — interaction is zone-based (§9.4, §10).
 
 ### 6.5 Audio production `[ME]`
 
-This is now conventional multitrack production, with one generated element.
+Five looping stems plus four zone-based interaction clips. All stems are complete.
 
-**Track 1 — `track_root_rave.wav` (the root voice).**
-Take the TSP tour from `root_graph.json`, map it to a latent trajectory, decode offline with RAVE at the full `loop_length_seconds`. A **closed** TSP tour returns to its starting node, which means the latent trajectory returns to its starting point, which means the audio loops seamlessly with no crossfade. This is a genuinely elegant property and worth a paragraph in the thesis — use a closed tour for this reason.
+**`track_voice.wav` — root voice (RAVE-generated).**
+TSP tour from `root_graph.json` → latent trajectory → offline RAVE decode. A closed TSP tour returns to its starting latent point, giving a seamless loop with no crossfade — a property worth a paragraph in the thesis.
 
-**Tracks 2–4 — `soil`, `canopy`, `drone`.**
-Designed or recorded conventionally in your DAW. Mix them *against* the RAVE track, not independently — the RAVE stem is the lead voice and the others are context.
+**`track_canopy.wav` — branch resonance (physical modelling).**
+Five per-class modal synthesis layers (`trunk_base`, `primary`, `lateral`, `fine`, `terminal`) produced by `tools/branch_synth.py` from `branch_graph.json`. Each class uses a stiffness-scaled mass-spring network; mode shapes are solved via generalised eigenvalue decomposition. Per-class layers were RMS-normalised to −18 dBFS, imported into a DAW, mixed and post-processed into the final stereo stem. Full pipeline documented in `docs/physical-modelling-documentation.md`.
 
-**Production requirements:**
-- All four tracks: exactly the same length, 48 kHz, 24-bit WAV, **stereo**.
-- Bounce from the same DAW session start so they are phase-coherent when summed.
-- Seamless loop: verify by looping in the DAW for 5 minutes with no audible seam.
-- Loop length: 90–180 s. Shorter loops become obvious within a 10-minute session.
-- **Leave headroom for filtering.** The runtime LPF closes to 800 Hz; if a track's identity lives entirely above 2 kHz it will simply vanish rather than transform. Give each track meaningful low-mid content.
-- Normalise the summed mix to −16 LUFS integrated with ≥ 6 dB true-peak headroom. Outdoor headphone listening will lose quiet material, but do not compress the life out of it.
+**`track_river.wav`, `track_birds1.wav`, `track_birds2.wav` — field recordings.**
+Recorded conventionally. `track_river` is a static bed: no LPF, pan, or tilt modulation at runtime (`IsStatic = true` on its `TrackChannel`).
 
-**Interaction one-shots:** 3–5 variants per node class, 0.3–3 s, 48 kHz, **mono** (they are pooled and pitch-shifted; mono keeps the pool cheap). Short decodes from latent points near nodes of that class are a natural source, but hand-designed samples are acceptable.
+**Production requirements (all five tracks):**
+- Exactly 120.00 s, 48 000 Hz, 24-bit WAV, **stereo** (5 760 000 samples).
+- Identical sample length to the sample — `PlayScheduled()` phase-lock depends on this.
+- Seamless loop verified in DAW; 20 ms raised-cosine fade applied at loop boundaries.
+- Leave headroom for filtering: the runtime LPF closes to 800 Hz. Give modulated tracks meaningful low-mid content so they transform rather than vanish.
+- Normalise each stem independently before delivery; master gain is set at runtime.
+
+**Interaction zone clips (`rave_zone1–4.wav`):**
+One RAVE-decoded clip per spatial zone (G1–G4). 44 100 Hz stereo, ~5.09 s each. Triggered as 2D one-shots on zone tap, panned by screen X. Decompress on Load, Preload ON.
 
 ### 6.6 Export `[BL]`
 
@@ -376,7 +363,7 @@ Deliverables land in `unity/Assets/Art/Models/` and `unity/Assets/Audio/` via Gi
 | `Experiencing` | placement confirmed | no HUD except a small "Reset" affordance | user presses Reset → `Placing`, or app backgrounded |
 | `Ended` | session end button held 2 s | thank-you + log flush | — |
 
-Audio behaviour across states: the four tracks begin playing (sample-synced) on entry to `Adjusting`, at reduced gain and with the LPF closed, so the mix "arrives" as the user confirms placement. They never stop until `Ended`. Transitions are logged (§12).
+Audio behaviour across states: the five tracks begin playing (sample-synced) on entry to `Adjusting`, at reduced gain and with the LPF closed, so the mix "arrives" as the user confirms placement. They never stop until `Ended`. Transitions are logged (§12).
 
 The fallback path exists because **outdoor plane detection on soil, grass and leaf litter is unreliable in bright sun** — this is the single most likely cause of a failed field session and the original spec had no mitigation for it.
 
@@ -386,17 +373,21 @@ The fallback path exists because **outdoor plane detection on soil, grass and le
 
 ### 8.1 Placement
 
-1. `ARRaycastManager` raycast from screen tap against `PlaneWithinPolygon`.
-2. On hit: instantiate `TreeInstance` prefab at hit pose, yaw-aligned to camera.
-3. **Attach an `ARAnchor`** to the instantiated object (`ARAnchorManager.AttachAnchor` on the hit plane). Do not simply set a world transform — an un-anchored object drifts as the user walks a full orbit.
-4. Fallback path: place at `camera.position + camera.forward * 2.0m`, projected to `y = camera.y - 1.4m` (assumed eye height), then let the user adjust with a two-finger vertical drag.
+AR plane detection is not used in the MVP. Outdoor detection on soil, grass, and leaf litter is unreliable in bright sunlight and adds UI complexity. The placement flow is:
+
+1. User points the phone camera toward the base of the real tree trunk.
+2. User taps **Confirm** — the root system prefab is instantiated at the current camera-forward world position and fixed there.
+3. The mix is already playing during this step (`Adjusting` state), so the audio "arrives" as the root system appears.
+
+Full placement UI polish (adjustment gestures, drift handling UI, reset affordance) is planned for `feat/polish-and-ui`.
 
 ### 8.2 Adjustment
 
+_Deferred to `feat/polish-and-ui`._ The `TreeAdjuster` script exists and will be wired to support:
+
 - One-finger horizontal drag → yaw rotation.
-- Pinch → uniform scale, clamped to `[0.5, 2.0]` of authored scale.
-- Two-finger vertical drag → distance along camera forward (fallback path only).
-- Confirm → freeze transform, disable manipulators, hide plane visualisation, transition to `Experiencing`.
+- Pinch → uniform scale.
+- Confirm → freeze transform, transition to `Experiencing`.
 
 ### 8.3 Drift handling
 
@@ -416,19 +407,20 @@ The fallback path exists because **outdoor plane detection on soil, grass and le
 
 ### 9.1 Model
 
-Four continuously looping stereo tracks, played as **2D sources** (`spatialBlend = 0`), summed to a master mixer group. There are no positional audio sources in the scene. Expression comes entirely from per-track modulation of filter, pan and gain, driven by the phone's pose relative to the placed tree.
+Five continuously looping stereo tracks, played as **2D sources** (`spatialBlend = 0`), summed to a master mixer group. There are no positional audio sources in the scene. Expression comes entirely from per-track modulation of filter, pan and gain, driven by the phone's pose relative to the placed tree.
 
 One GameObject per track under `Bootstrap/TrackMixer/`:
 
 ```
 TrackMixer
-├── Track_RootRave   [AudioSource (2D), AudioLowPassFilter]
-├── Track_Soil       [AudioSource (2D), AudioLowPassFilter]
-├── Track_Canopy     [AudioSource (2D), AudioLowPassFilter]
-└── Track_Drone      [AudioSource (2D), AudioLowPassFilter]
+├── Track_Voice    [AudioSource (2D), AudioLowPassFilter]   tilt_bias −1.0 (underground)
+├── Track_Canopy   [AudioSource (2D), AudioLowPassFilter]   tilt_bias +1.0 (above)
+├── Track_River    [AudioSource (2D)]                       static bed — no modulation
+├── Track_Birds1   [AudioSource (2D), AudioLowPassFilter]   tilt_bias +0.5
+└── Track_Birds2   [AudioSource (2D), AudioLowPassFilter]   tilt_bias +0.5
 ```
 
-All four route to AudioMixer group `Master`. Per-track control is done on the components (`volume`, `panStereo`, `cutoffFrequency`), not through exposed mixer parameters — simpler, no snapshot management, and avoids the mixer's lack of a native pan effect.
+`track_river` is a static bed (`TrackChannel.IsStatic = true`): it plays at constant gain with a fully open filter and centred pan, providing a stable anchor while the other tracks modulate. All five tracks start via `PlayScheduled()` from a shared `dspTime`. Per-track control is done on the components (`volume`, `panStereo`, `cutoffFrequency`), not through exposed mixer parameters.
 
 ### 9.2 Sample-synchronised start `[CC]`
 
@@ -475,7 +467,7 @@ pan = sin(azimuth)      // azimuth in radians, positive = tree to the right
 
 Tree directly ahead or directly behind → centre. Tree at 90° right → hard right. The sine form handles the front/back ambiguity gracefully, because when the tree is behind you `attention` has already closed the filter and the mix has receded.
 
-Apply a per-track pan width multiplier so the layers do not all swing together: `root_rave` × 1.0, `soil` × 0.7, `canopy` × 0.85, `drone` × 0.25 (the bed stays near centre and anchors the image).
+Apply a per-track pan width multiplier (`TrackChannel.PanWidth`) so the layers do not all swing together. `track_river` (static bed, `IsStatic = true`) is always centred and anchors the image.
 
 **Mapping 3 — Tilt → vertical layer balance.** This is the axis that carries the "underground" perception in v1.1.
 
@@ -497,7 +489,9 @@ Implemented as a multiplicative ceiling on the Mapping-1 cutoff, so walking away
 
 ### 9.4 Interaction layer
 
-Independent of the four tracks and unaffected by Mappings 1–4. Pooled one-shot `AudioSource`s (pool size 12), 2D, panned to match the touch point's azimuth relative to the camera so touches feel located even without spatialisation. Random pitch within `pitch_var_semitones`. Free overlap, max 6 concurrent, steal oldest.
+Independent of the five looping tracks and unaffected by Mappings 1–4. The root system is divided into four spatial zones (G1–G4) defined by depth Y and radial spread from the trunk axis (see `tools/split_roots.py`). Each zone has an axis-aligned Box Collider on the `InteractionZone` layer with a `ZoneTrigger` component.
+
+When the user taps, `ZoneInteraction` raycasts from the AR camera against `InteractionZone` only. On hit, the zone's RAVE-generated clip (`rave_zone1–4.wav`) plays as a 2D one-shot, panned by the touch's normalised screen X position. Debounce: 120 ms (configurable via `InteractionSettingsConfig.debounceMs`).
 
 ### 9.5 Unity audio settings `[UN]`
 
@@ -506,7 +500,7 @@ Independent of the four tracks and unaffected by Mappings 1–4. Pooled one-shot
 - Max real voices: 24. Virtual: 64.
 - Spatialiser plugin: **None**.
 - iOS audio session category: `AVAudioSessionCategoryPlayback`, so audio survives the ringer switch. **Test this** — a participant with the silent switch on hearing nothing is a wasted session.
-- Import settings: four tracks → Streaming, Compressed in Memory not required, **Force to Mono OFF**, Preload OFF, Load in Background ON. Interaction one-shots → Decompress on Load, Preload ON.
+- Import settings: five looping tracks → Streaming, **Force to Mono OFF**, Preload OFF, Load in Background ON. Interaction zone clips → Decompress on Load, Preload ON.
 
 ### 9.6 Why no spatialiser (design rationale)
 
@@ -516,14 +510,28 @@ Recorded here as an ADR summary so the decision is not relitigated mid-build. 3D
 
 ## 10. Interaction `[CC]`
 
-1. On `TouchPhase.Began`, raycast from screen point against layer `RootMesh` only, max distance 10 m.
-2. On hit, find the nearest graph node to the hit point using a prebuilt spatial hash (built once at load, cell size 0.25 m). Do not linear-scan the node list per touch.
-3. Fire:
-   - One-shot matching `node.class`, random variant, random pitch, panned by touch azimuth (§9.4).
-   - Particle burst at the hit point, normal-aligned.
+Zone-based tap interaction replaces the earlier per-node raycast approach. The root system is divided into four spatial zones based on depth (Y) and radial spread from the trunk axis:
+
+| Zone | Region | Y range | Spread |
+|---|---|---|---|
+| G1 | Shallow horizontal | Y > −2.0 m | > 1.2 m |
+| G2 | Upper trunk | Y > −2.8 m | ≤ 1.2 m |
+| G3 | Lower trunk | Y ≤ −2.8 m | ≤ 1.2 m |
+| G4 | Deep horizontal | Y ≤ −2.0 m | > 1.2 m |
+
+Each zone is a plain GameObject inside `AquiFuturo_Tree_Terra.prefab` with:
+- `BoxCollider` (Is Trigger **OFF** — Physics.Raycast skips trigger colliders)
+- `AudioSource` (2D, spatialBlend = 0, clip = matching `rave_zoneN.wav`)
+- `ZoneTrigger` component (zone id, caches AudioSource)
+
+`ZoneInteraction` (on a separate GameObject) raycasts from the AR camera against the `InteractionZone` layer mask on `TouchPhase.Began`. On hit it calls `ZoneTrigger.Play(pan)` where pan is derived from the normalised screen X of the touch.
+
+1. Debounce: 120 ms (`InteractionSettingsConfig.debounceMs`).
+2. Touch fires:
+   - RAVE zone clip (one-shot, panned by screen X).
+   - Particle burst at the hit point — **deferred to `feat/polish-and-ui`**.
    - Log the event (§12).
-4. Debounce: ignore a second hit on the same node within 120 ms.
-5. Touch does not modify the four-track mix in the MVP. (Reserved: touched nodes could bias a runtime traversal in a future build.)
+3. Touch does not modify the five-track mix.
 
 ---
 
@@ -624,8 +632,8 @@ aquifuturo-ar/
         │   ├── Placement/       # TreePlacement, PlacementReticle, TreeAdjuster
         │   ├── Graph/           # RootGraph, RootGraphLoader, SpatialHash
         │   ├── Audio/           # TrackMixer, PoseAnalyzer, TrackChannel,
-        │   │                    # InteractionAudioPool, ITrackSource
-        │   ├── Interaction/     # RootInteraction, ParticleSpawner
+        │   │                    # ITrackSource
+        │   ├── Interaction/     # ZoneInteraction, ZoneTrigger, ParticleSpawner
         │   └── UI/              # HudController
         ├── Settings/            # ScriptableObject configs
         └── XR/
@@ -662,7 +670,7 @@ Claude Code cannot wire Inspector fields. Therefore **all tunable values live in
 
 - `AudioSettingsConfig` — cutoff min/max, smooth times per axis, pan width per track, tilt gain range, distance curve, master gain curve, pool size
 - `PlacementSettingsConfig` — scan timeout, scale clamps, fallback distance, drift thresholds
-- `InteractionSettingsConfig` — debounce ms, max voices, raycast distance, spatial hash cell size
+- `InteractionSettingsConfig` — debounce ms, raycast distance
 - `DebugSettingsConfig` — logging verbosity, on-screen readout of the four pose axes, gizmos for graph nodes
 
 The on-screen pose readout in `DebugSettingsConfig` is not optional for you — you cannot tune four simultaneous mappings by ear in the field without seeing the raw values. Build it in M3.
@@ -745,12 +753,14 @@ Unity 6 LTS + AR Foundation 6 iOS AR prototype. Read SPEC.md before any task.
 Conventions in SPEC.md §2 and data contracts in §5 are binding.
 
 ## Audio model (read this before touching anything in Scripts/Audio)
-Four looping STEREO tracks played as 2D AudioSources (spatialBlend = 0).
+Five looping STEREO tracks played as 2D AudioSources (spatialBlend = 0).
 No 3D audio. No spatialiser plugin. No positional emitters.
+Tracks: track_voice, track_canopy, track_river, track_birds1, track_birds2.
+track_river is a static bed (no modulation). The other four are modulated.
 Expression comes from per-track modulation of AudioLowPassFilter.cutoffFrequency,
 AudioSource.panStereo and AudioSource.volume, driven by four pose axes
 computed relative to the placed tree (SPEC.md §9.3).
-All four tracks start via PlayScheduled() from a single shared dspTime.
+All five tracks start via PlayScheduled() from a single shared dspTime.
 
 ## What you own
 - All C# under unity/Assets/Scripts/
@@ -889,11 +899,11 @@ Main.unity
 ├── Bootstrap                 [GameManager, SessionLogger, HudController,
 │                               PoseAnalyzer]
 │   └── TrackMixer            [TrackMixer]
-│       ├── Track_RootRave    [AudioSource, AudioLowPassFilter]
-│       ├── Track_Soil        [AudioSource, AudioLowPassFilter]
+│       ├── Track_Voice       [AudioSource, AudioLowPassFilter]
 │       ├── Track_Canopy      [AudioSource, AudioLowPassFilter]
-│       └── Track_Drone       [AudioSource, AudioLowPassFilter]
-├── InteractionAudioPool      [InteractionAudioPool]
+│       ├── Track_River       [AudioSource]  ← static bed, no LPF
+│       ├── Track_Birds1      [AudioSource, AudioLowPassFilter]
+│       └── Track_Birds2      [AudioSource, AudioLowPassFilter]
 ├── Placement                 [TreePlacement, PlacementReticle, TreeAdjuster]
 └── UI Canvas (Screen Space - Overlay)
     ├── ScanPrompt
@@ -903,7 +913,7 @@ Main.unity
     └── DebugReadout          (four pose axes, toggled by DebugSettings)
 
 Also:
-- Create layer `RootMesh` (index 8) and tags `TreeRoot`, `RootNode`.
+- Create layers `RootMesh` (index 8) and `InteractionZone` (index 9).
 - Create ScriptableObject instances in Assets/Settings/: AudioSettings.asset,
   PlacementSettings.asset, InteractionSettings.asset, DebugSettings.asset.
   Populate from SPEC.md §9.3, §10, §13.
@@ -913,7 +923,7 @@ Also:
 
 ## Session C2 — Tree prefab and audio
 - Create prefab Assets/Prefabs/TreeInstance.prefab from tree_full.glb:
-  - Roots child -> layer RootMesh, add MeshCollider (convex OFF), tag TreeRoot
+  - Roots child -> layer RootMesh, add MeshCollider (convex OFF)
   - Trunk / Branches -> no collider
 - Verify import: NO rotation correction on the prefab root transform. If the
   model is lying on its side, STOP — the GLB export was wrong (SPEC §2.1).
@@ -925,21 +935,21 @@ Also:
   - AudioLowPassFilter: cutoff 800, resonance Q 1.0
   - Import settings on the clip: Streaming, Force to Mono OFF, Preload OFF,
     Load in Background ON
-- Interaction clips: Decompress on Load, Preload ON, mono.
-- Assign the four track references and their manifest ids on TrackMixer.
+- Interaction zone clips (`rave_zone1–4.wav`): Decompress on Load, Preload ON, stereo.
+- Assign the five track references on TrackMixer. Set `track_river` TrackChannel `IsStatic = true`, `LpfSensitivity = 0`, `PanWidth = 0`.
 
 ## Session C3 — Interaction and polish
 - Create Assets/Prefabs/RootSpark.prefab per SPEC.md §11.
-- Wire RootInteraction raycast layer mask to RootMesh only.
+- Wire ZoneInteraction `_zoneMask` to the `InteractionZone` layer only.
 - Create the root fade material/shader per SPEC.md §8.4 and the excavation quad.
-- Configure InteractionAudioPool size and assign the one-shot clips by class.
+- Place four zone Box Colliders (G1–G4) on the `InteractionZone` layer; add `ZoneTrigger` to each and assign the matching `rave_zoneN.wav` AudioSource clip.
 - Build Settings: add Main.unity, switch platform to iOS, build to Xcode project.
 
 ## Acceptance check per session
 - [ ] Scene saved and hierarchy matches the target
 - [ ] No null serialised references except those explicitly reported
 - [ ] Project compiles, no console errors on Play
-- [ ] In Play mode, all four tracks audible and starting together
+- [ ] In Play mode, all five tracks audible and starting together
 - [ ] git status shows only expected files changed
 ```
 

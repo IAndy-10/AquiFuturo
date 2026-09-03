@@ -1,7 +1,7 @@
 # AquiFuturo AR — Project Status
 
-**Date:** 2026-08-08
-**Branch:** `feat/audio-unity-test`
+**Date:** 2026-08-23
+**Branch:** `dev`
 **Spec version:** v1.1
 
 ---
@@ -10,13 +10,13 @@
 
 | ID | Milestone | Status | Blocker |
 |---|---|---|---|
-| M0 | Repo + contracts | done | — |
-| M1 | Placeholder AR end-to-end on device | **in progress** | Audio wiring unverified (TrackMixer Inspector fields); placement + root mesh confirmed on device |
-| M2 | Real tree assets | partial | `tree_full.glb` pending Blender session |
-| M3 | Audio complete | not started | depends on M1 + M2 |
-| M4 | Interaction + polish | not started | depends on M3 |
-| M5 | Instrumentation + hardening | not started | depends on M4 |
-| M6 | Field readiness | not started | depends on M5 + IRB |
+| M0 | Repo + contracts | ✅ done | — |
+| M1 | Root system visible in AR on device, audio responding to pose | ✅ done | — |
+| M2 | Real assets — FBX models, skeleton graphs, synthesis pipeline | ✅ done | — |
+| M3 | Audio complete — 5 tracks, RAVE zones, pose mappings, interaction | ✅ done | — |
+| M4 | Polish + UI — particles, fade shader, HUD, reset | 🔄 in progress | `feat/polish-and-ui` |
+| M5 | Instrumentation + hardening — SessionLogger CSV, 20-min soak | not started | depends on M4 |
+| M6 | Field readiness — IRB, TestFlight live, 3 pilot sessions | not started | depends on M5 + IRB |
 
 ---
 
@@ -25,98 +25,83 @@
 | Item | State |
 |---|---|
 | Repo scaffold, `.gitignore`, `.gitattributes`, Git LFS | done |
-| `SPEC.md` v1.1, `CLAUDE.md`, `CHANGELOG.md` | done |
-| `docs/blender_session.md`, `docs/unity_session.md`, `docs/field_protocol.md` | done |
-| `docs/decisions/` directory | done (empty — no ADRs written yet) |
+| `SPEC.md` v1.1, `CLAUDE.md`, `CHANGELOG.md`, `STATUS.md` | done |
 | `tools/validate_assets.py` — schema, node/edge integrity, audio parity checks | done |
-| `tools/skeletonize.py` — mesh-to-root_graph.json CLI (SPEC §6.4) | done |
 | `tools/graph_builder.py` — Blender-native skeleton extraction (stdlib + numpy) | done |
 | `tools/requirements.txt` | done |
-| `data/root_graph.json` — 545 nodes, 543 edges, schema v1.1, Unity Y-up | done |
-| `data/branch_graph.json` — 267 nodes, 266 edges, schema v1.1, Unity Y-up | done |
-| 20 C# scripts across Core / Audio / Placement / Graph / Interaction / UI | done |
+| `data/processed/skeleton/root_graph.json` — 545 nodes, 543 edges, schema v1.1, Unity Y-up | done |
+| `data/processed/skeleton/branch_graph.json` — 267 nodes, 266 edges, schema v1.1, Unity Y-up | done |
+| C# scripts across Core / Audio / Placement / Graph / Interaction / UI | done |
 | 4 ScriptableObject config classes (`AudioSettingsConfig`, `PlacementSettingsConfig`, `InteractionSettingsConfig`, `DebugSettingsConfig`) | done |
 | Unity project open, packages installed, scripts imported (.meta files present) | done |
 
 ---
 
-## M1 — Placeholder end-to-end (blocked)
-
-Acceptance: placeholder cylinder placeable in AR on device, anchored, four placeholder tracks playing sample-synced with working LPF and pan. TestFlight placeholder submitted.
-
-| Item | State | Owner |
-|---|---|---|
-| Unity scene assembled (`Bootstrap`, `ARSession`, `TrackMixer` hierarchy, reticle) | **done** | — |
-| AR plane detection + tap-to-place + `ARAnchor` attach | **done** — confirmed on device | — |
-| Placeholder cylinder visible and anchored to detected plane | **done** — confirmed on device | — |
-| All 4 ScriptableObject config assets created (`AudioSettings`, `DebugSettings`, `InteractionSettings`, `PlacementSettings`) | **done** | — |
-| Four placeholder WAV tracks imported (`track_drone`, `track_root_rave`, `track_soil`, `track_canopy`) | **done** | — |
-| `TreeInstance` prefab wired (`GameManager`, `TreePlacement`, `TrackMixer`, `RootGraphLoader`) | **unverified** | Unity Inspector |
-| Four placeholder AudioClips playing via `PlayScheduled()` | **unverified** — TrackMixer Inspector fields need check | Unity Inspector |
-| LPF + pan responding to phone orientation (pose axes live) | **unverified** — depends on audio step above | — |
-| `RootMeshBuilder` + `RootMeshConfig` scripts added; procedural tube mesh from skeleton | **done** | — |
-| `StreamingAssets/root_graph.json` (real scan data, schema 1.1, 545 nodes, 543 edges) | **done** | — |
-| `RootMesh` layer (User Layer 3) added to TagManager | **done** | — |
-| `Graph` GameObject with `RootGraphLoader` wired in scene | **done** | — |
-| `Interaction` GameObject with `RootInteraction` wired (`_graph`, `_bootstrap`) | **done** — AudioPool + ParticleSpawner unwired | Unity Inspector |
-| `RootMeshSettings.asset` (`RootMeshConfig` ScriptableObject) created | **done** | — |
-| `TreePlacement` → `RootMeshBuilder` wired; Build/Clear called at placement/reset | **done** | — |
-| `data/audio_manifest.json` authored | **pending** | [CC] |
-| TestFlight placeholder build submitted (Apple review cleared early) | **pending** | [ME] |
-
-**Critical path note:** TestFlight first-submission review takes 1–3 days (SPEC §16.4). Submit a placeholder build as soon as M1 scene is assembled — do not wait for real assets.
-
-**Next action:** Verify TrackMixer Inspector wiring in Unity (4 fields: `_audioConfig`, `_gameManager`, `_poseAnalyzer`, `_tracks[0..3]`). Confirm audio plays on device before moving to M2 mesh swap.
-
----
-
-## M2 — Real tree assets (partial)
-
-| Item | State | Owner |
-|---|---|---|
-| `data/root_graph.json` (schema v1.1, Unity Y-up, TSP tour) | **done** | [CC]+[BL] |
-| `data/branch_graph.json` (schema v1.1, Unity Y-up, TSP tour) | **done** | [CC]+[BL] |
-| `unity/Assets/Art/Models/tree_full.glb` (`Trunk`, `Branches`, `Roots` children, ≤60k tris) | **pending** | Blender MCP session |
-| GLB validated: correct Y-up orientation, no transform correction needed in Unity | **pending** | [BL]+[UN] |
-| `unity/Assets/Audio/` — 4 tracks × 48 kHz stereo WAV, identical sample length | **pending** | [ME] |
-| `tools/render_latent_audio.py` — RAVE offline decode driver | **pending** | [CC] |
-| `track_root_rave.wav` decoded from TSP tour latent trajectory | **pending** | [ME] |
-
----
-
-## M3 — Audio complete (not started)
-
-Depends on: M1 (scene running on device), M2 (final tracks + GLB).
+## M1 — Root system in AR, audio responding to pose (done)
 
 | Item | State |
 |---|---|
-| Four final tracks bounced, validated by `validate_assets.py` | pending |
-| All four pose mappings implemented (attention→LPF, azimuth→pan, tilt→layer balance, distance→gain+cutoff ceiling) | pending |
-| LPF interpolation confirmed logarithmic in Hz (SPEC §9.3) | pending |
-| Per-track pan width multipliers applied (1.0 / 0.7 / 0.85 / 0.25) | pending |
-| Debug pose readout on screen (`DebugSettingsConfig`) | pending |
-| Tracking-loss muting (`ARSessionState` → `TrackMixer` −24 dB + LPF closed) | pending |
-| Mix tuned on headphones outdoors | pending |
+| Unity scene assembled (`Bootstrap`, `ARSession`, `TrackMixer`, zone colliders) | done |
+| Root system FBX visible in AR on device | done |
+| Root system displayed alone — no above-ground tree model visible | done |
+| All 4 ScriptableObject config assets created and wired | done |
+| Five looping tracks playing via `PlayScheduled()` from shared `dspTime` | done |
+| LPF + pan + tilt + distance modulation responding to phone movement | done |
+| `AquiFuturo_Tree_Terra.prefab` wired (TrackMixer, zones, ZoneInteraction) | done |
+| `InteractionZone` layer added to TagManager | done |
+| TestFlight build submitted | **pending** |
 
 ---
 
-## M4 — Interaction + polish (partial — groundwork done ahead of schedule)
+## M2 — Real assets (done)
 
-Depends on: M3.
+Decision: no full-tree GLB. Only root FBX models are used at runtime. Branches FBX is for pipeline extraction only.
 
 | Item | State |
 |---|---|
-| `RootMesh` layer + `RootMeshBuilder` producing collider mesh from skeleton | **done** (landed in M1 branch) |
-| `RootInteraction` in scene, wired to `_graph` + `_bootstrap` | **done** — raycast logic present; AudioPool + ParticleSpawner unwired |
-| Touch raycast against `RootMesh` layer → nearest node via `SpatialHash` | **partial** — `RootInteraction` + layer in place; end-to-end not verified on device |
-| Interaction one-shot samples (3–5 variants per node class, 48 kHz mono) | pending |
-| `InteractionAudioPool` (12 sources, max 6 concurrent, steal oldest) | pending — not wired in scene |
-| Particle burst at hit point, normal-aligned (`ParticleSpawner`) | pending — not wired in scene |
+| `data/processed/skeleton/root_graph.json` (schema v1.1, 545 nodes, Unity Y-up) | done |
+| `data/processed/skeleton/branch_graph.json` (267 nodes, Unity Y-up) | done |
+| Zone skeleton graphs `root_graph_g1–g4.json` (via `split_roots.py`) | done |
+| `AquiFuturo_RootA.fbx` + `AquiFuturo_RootB.fbx` + `AquiFuturo_Trunk.fbx` imported | done |
+| `tools/tree_to_wav.py` — modal mass-spring synthesis from branch_graph (`strike_tour` excitation) | done |
+| `tools/branch_synth.py` — per-class modal synthesis, all 5 node classes audible | done |
+| `tools/pca_rave.py` — TSP tour → PCA latent → RAVE zone WAVs | done |
+
+---
+
+## M3 — Audio complete (done)
+
+| Item | State |
+|---|---|
+| Five final tracks (track_voice, track_canopy, track_river, track_birds1, track_birds2) | done |
+| All tracks 48 kHz stereo, 120 s, identical sample length, phase-locked | done |
+| 20 ms raised-cosine fade-in/out applied — loop click eliminated | done |
+| `tools/audio_manifest.json` — 5-track + 4 zone interaction clip registry | done |
+| `rave_zone1–4.wav` RAVE interaction clips in `Assets/Audio/Interaction/` | done |
+| All four pose mappings implemented (attention→LPF, azimuth→pan, tilt→layer balance, distance→gain) | done |
+| LPF interpolation logarithmic in Hz (SPEC §9.3) | done |
+| Per-track `LpfSensitivity`, `PanWidth`, `TiltBias` configurable via Inspector | done |
+| `track_river` static bed — no modulation, always centred | done |
+| Zone tap interaction: Box Collider raycast → `ZoneTrigger.Play(pan)` → RAVE clip | done |
+| Tracking-loss muting (`IsTrackingMuted` → `_muteGain` ramp in TrackMixer) | done |
+| Outdoor mix tuning | pending — `feat/polish-and-ui` |
+
+---
+
+## M4 — Polish + UI (in progress — `feat/polish-and-ui`)
+
+| Item | State |
+|---|---|
+| Zone-based tap interaction wired and confirmed producing audio | done |
+| `ZoneInteraction` + `ZoneTrigger` scripts | done |
+| `InteractionZone` layer + Box Colliders for zones G1–G4 | done |
+| Particle visual feedback (`ParticleSpawner`) | pending — `feat/polish-and-ui` |
 | Root fade shader (opacity 1.0 at deepest node → 0.25 near y=0) | pending |
-| HUD — scan prompt, reticle, confirm button, reset affordance | pending |
-| Tracking-loss UI ("Move back toward the tree") | pending |
-| `PlacingFallback` state (20 s scan timeout → fixed 2 m forward ray) | pending |
-| Full state machine validated (`Booting`→`Scanning`→`Placing`→`Adjusting`→`Experiencing`→`Ended`) | pending |
+| HUD — confirm button, reset affordance, tracking-loss UI | pending |
+| Placement adjustment gestures (yaw drag, pinch scale) | pending |
+| Full state machine validated on device end-to-end | pending |
+| Outdoor mix tuning on headphones | pending |
+| Validate `_startImmediatelyForTesting` disabled before field sessions | pending |
 
 ---
 
@@ -152,12 +137,11 @@ Depends on: M5.
 
 | Gap | SPEC ref | Priority |
 |---|---|---|
-| `data/audio_manifest.json` missing — validate_assets.py will warn | §5.2 | high — needed for M1 |
-| `tools/render_latent_audio.py` not written — RAVE offline decode | §6.5 | high — needed for M2 audio |
-| No ADRs written in `docs/decisions/` — spatialiser removal is the first one due | §9.6 | medium |
-| `PlacementReticle` script not found in Scripts/ — may be a Unity-side prefab concern | §8.1 | medium — clarify before M1 scene assembly |
-| `unity/Assets/StreamingAssets/root_graph.json` added — `RootGraphLoader` runtime path now satisfied | §14.1 | resolved |
-| `InteractionAudioPool` + `ParticleSpawner` not yet in scene — `RootInteraction` unwired for audio/particles | §9.4, §11 | high — needed for M4 |
+| `validate_assets.py` GLB check still references `tree_full.glb` (dropped asset) — remove in `feat/polish-and-ui` | §5.4 | low |
+| `unity/Assets/StreamingAssets/root_graph.json` no longer needed at runtime (zone interaction replaced node-based) — remove in `feat/polish-and-ui` | §10 | low |
+| `_startImmediatelyForTesting` must be disabled on both `TrackMixer` and `ZoneInteraction` before any field session | §9.2 | high — field session risk |
+| TestFlight first build not yet submitted — start Apple review early (1–3 day lead time) | §16.4 | high |
+| Outdoor mix tuning not done | §17 M3 | high — needed before M6 |
 
 ---
 
@@ -171,6 +155,7 @@ Depends on: M5.
 
 ## Key pending decisions
 
-- **Loop length** — must be set before audio production begins. SPEC §5.2 suggests 90–180 s; target 120 s unless RAVE decode time is prohibitive.
+- **Loop length** — set to 120 s. All five tracks confirmed at exactly 5,760,000 samples @ 48 kHz. ✅
 - **Pilot device floor** — stated as iPhone 12 / A14 in SPEC §13. Confirm with participant recruitment criteria.
 - **IRB timeline** — approval lead time is the highest-variance schedule risk. Start this process now (SPEC §12).
+- **Placement UX** — manual positioning confirmed for MVP. AR plane detection deferred to `feat/polish-and-ui`.
