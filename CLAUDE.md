@@ -5,12 +5,14 @@ Unity 6 LTS + AR Foundation 6 iOS AR prototype. Read SPEC.md before any task.
 Conventions in SPEC.md §2 and data contracts in §5 are binding.
 
 ## Audio model (read this before touching anything in Scripts/Audio)
-Four looping STEREO tracks played as 2D AudioSources (spatialBlend = 0).
+Five looping STEREO tracks played as 2D AudioSources (spatialBlend = 0).
 No 3D audio. No spatialiser plugin. No positional emitters.
+Tracks: track_voice, track_canopy, track_river, track_birds1, track_birds2.
+track_river is a static bed (no modulation). The other four are modulated.
 Expression comes from per-track modulation of AudioLowPassFilter.cutoffFrequency,
 AudioSource.panStereo and AudioSource.volume, driven by four pose axes
 computed relative to the placed tree (SPEC.md §9.3).
-All four tracks start via PlayScheduled() from a single shared dspTime.
+All five tracks start via PlayScheduled() from a single shared dspTime.
 
 ## What you own
 - All C# under unity/Assets/Scripts/

@@ -2,7 +2,7 @@
 
 iOS Augmented Reality prototype for an MAT M.S. thesis (UC Santa Barbara, 2026).
 
-The app places a virtual underground root system in AR and reveals it alongside a five-track soundscape that responds to how the user moves and where they touch. One audio track — the *root voice* — is produced offline by an unsupervised cross-domain manifold alignment: root skeleton graph traversals (TSP tour) become trajectories through a RAVE latent space, decoded into audio. Interaction zone clips are also RAVE-generated, one per spatial root zone. The remaining tracks are conventionally designed. The app is the interaction and mixing layer over those stems.
+The app places a virtual underground root system in AR and reveals it alongside a five-track soundscape that responds to how the user moves and where they touch. Two tracks are derived directly from the tree's geometry: `track_canopy` is produced via modal synthesis (the branch skeleton graph treated as a mass-spring network, resonant modes extracted, rendered per structural class, and post-processed in a DAW); `track_voice` is produced via an unsupervised cross-domain manifold alignment (TSP tour trajectories through a RAVE latent space, decoded into audio). Interaction zone clips are also RAVE-generated, one per spatial root zone. The remaining three tracks are field recordings. The app is the interaction and mixing layer over those stems.
 
 The root system is displayed alone (no above-ground tree model). Placement is manual: the user points the phone near the real tree trunk and taps to fix the root system at that position.
 
@@ -60,7 +60,7 @@ aquifuturo-ar/
 | Unity | 6 LTS (6000.0.x) |
 | AR Foundation | 6.x |
 | ARKit XR Plugin | matching AR Foundation |
-| Blender | 4.x |
+| Blender | 5.2 LTS |
 | Xcode | latest — iOS 16.0 minimum deployment |
 | Python | 3.11 |
 
