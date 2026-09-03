@@ -1,6 +1,6 @@
 # AquiFuturo AR — Project Status
 
-**Date:** 2026-08-17
+**Date:** 2026-08-23
 **Branch:** `dev`
 **Spec version:** v1.1
 
