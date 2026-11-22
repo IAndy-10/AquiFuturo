@@ -6,10 +6,13 @@ Checks performed:
   2. root_graph.json node/edge referential integrity
   3. All node positions fall inside declared bounds
   4. audio_manifest.json schema_version matches SUPPORTED_SCHEMA_VERSION
-  5. Every manifest track file exists in unity/Assets/Audio/Tracks/
-  6. Every interaction sample file exists in unity/Assets/Audio/Interaction/
+  5. Every manifest track file exists in AquiFuturo-app/Assets/Audio/Tracks/
+  6. Every interaction sample file exists in AquiFuturo-app/Assets/Audio/Interaction/
   7. All five tracks are 48 kHz stereo and identical in sample length
-  8. tree_full.glb exists and contains exactly Trunk, Branches, Roots top-level nodes
+  8. The three FBX models required by SPEC §5.3 exist in AquiFuturo-app/Assets/Art/Models/
+
+Audio files are stored in Git LFS. If a WAV is still an LFS pointer (not
+pulled), it is reported as such; run `git lfs pull` first.
 
 Run:
     python tools/validate_assets.py
@@ -36,7 +39,9 @@ REQUIRED_NODE_CLASSES = {"trunk_base", "primary", "lateral", "fine", "terminal"}
 EXPECTED_TRACK_IDS = {"track_voice", "track_canopy", "track_river", "track_birds1", "track_birds2"}
 EXPECTED_SAMPLE_RATE = 48_000
 EXPECTED_CHANNELS = 2  # stereo
-GLB_REQUIRED_CHILDREN = {"Trunk", "Branches", "Roots"}
+REQUIRED_MODELS = ("AquiFuturo_RootA.fbx", "AquiFuturo_RootB.fbx", "AquiFuturo_Trunk.fbx")
+UNITY_ASSETS = Path("AquiFuturo-app") / "Assets"
+LFS_POINTER_PREFIX = b"version https://git-lfs.github.com/spec/"
 
 
 # ---------------------------------------------------------------------------
@@ -51,6 +56,12 @@ def _load_json(path: Path) -> dict[str, Any]:
         raise FileNotFoundError(f"Required file not found: {path}")
     except json.JSONDecodeError as exc:
         raise ValueError(f"JSON parse error in {path}: {exc}") from exc
+
+
+def _is_lfs_pointer(path: Path) -> bool:
+    """True if the file is a Git LFS pointer rather than the real content."""
+    with path.open("rb") as fh:
+        return fh.read(len(LFS_POINTER_PREFIX)) == LFS_POINTER_PREFIX
 
 
 def _check_schema_version(data: dict[str, Any], path: Path) -> None:
@@ -224,6 +235,12 @@ def validate_audio_manifest(
             )
             continue
 
+        if _is_lfs_pointer(wav_path):
+            errors.append(
+                f"Track '{filename}' is a Git LFS pointer, not audio. Run `git lfs pull`."
+            )
+            continue
+
         if have_soundfile:
             try:
                 info = sf.info(str(wav_path))
@@ -265,77 +282,29 @@ def validate_audio_manifest(
                 f"Interaction sample not found: {sample_path}. "
                 "TODO: produce and commit the one-shot samples (SPEC §6.5)."
             )
+        elif _is_lfs_pointer(sample_path):
+            errors.append(
+                f"Interaction sample '{filename}' is a Git LFS pointer, not audio. "
+                "Run `git lfs pull`."
+            )
 
     return errors
 
 
 # ---------------------------------------------------------------------------
-# Check 9: tree_full.glb
+# Check 8: FBX models (SPEC §5.3)
 # ---------------------------------------------------------------------------
 
-def validate_glb(glb_path: Path) -> list[str]:
+def validate_models(models_dir: Path) -> list[str]:
     """
     Returns a list of error strings. Empty list = pass.
-    Checks: file existence, top-level children named exactly Trunk/Branches/Roots.
+    Checks: the three FBX models required by SPEC §5.3 exist. Their content
+    is not inspected (FBX is binary; Unity validates it on import).
     """
     errors: list[str] = []
-
-    if not glb_path.exists():
-        errors.append(
-            f"TODO (no asset yet): {glb_path} does not exist. "
-            "Run the Blender session (docs/blender_session.md) to produce it. "
-            "This check MUST pass before any Unity import."
-        )
-        return errors
-
-    try:
-        import pygltflib  # type: ignore[import]
-        have_pygltflib = True
-    except ImportError:
-        log.warning(
-            "pygltflib not installed — skipping GLB child-name check. "
-            "Install with: pip install pygltflib"
-        )
-        have_pygltflib = False
-
-    if not have_pygltflib:
-        log.info(f"GLB file exists at {glb_path} (child structure not verified — install pygltflib)")
-        return errors
-
-    try:
-        gltf = pygltflib.GLTF2().load(str(glb_path))
-    except (OSError, ValueError) as exc:
-        errors.append(f"Failed to parse {glb_path}: {exc}")
-        return errors
-
-    # Find scene root nodes
-    scene_index = gltf.scene if gltf.scene is not None else 0
-    if not gltf.scenes or scene_index >= len(gltf.scenes):
-        errors.append(f"{glb_path.name}: no scenes found in GLB")
-        return errors
-
-    scene = gltf.scenes[scene_index]
-    top_level_names: set[str] = set()
-    for node_index in (scene.nodes or []):
-        if node_index < len(gltf.nodes):
-            name = gltf.nodes[node_index].name
-            if name:
-                top_level_names.add(name)
-
-    missing = GLB_REQUIRED_CHILDREN - top_level_names
-    extra = top_level_names - GLB_REQUIRED_CHILDREN
-
-    if missing:
-        errors.append(
-            f"{glb_path.name}: missing required top-level children: {sorted(missing)} "
-            f"(SPEC §5.3). Found: {sorted(top_level_names)}"
-        )
-    if extra:
-        errors.append(
-            f"{glb_path.name}: unexpected top-level children: {sorted(extra)} "
-            f"(SPEC §5.3 requires exactly Trunk, Branches, Roots)"
-        )
-
+    for name in REQUIRED_MODELS:
+        if not (models_dir / name).exists():
+            errors.append(f"Required model not found: {models_dir / name} (SPEC §5.3)")
     return errors
 
 
@@ -351,9 +320,9 @@ def run_validation(repo_root: Path) -> int:
     graph_path = repo_root / "data" / "processed" / "skeleton" / "root_graph.json"
     branch_graph_path = repo_root / "data" / "processed" / "skeleton" / "branch_graph.json"
     manifest_path = repo_root / "tools" / "audio_manifest.json"
-    tracks_dir = repo_root / "unity" / "Assets" / "Audio" / "Tracks"
-    interaction_dir = repo_root / "unity" / "Assets" / "Audio" / "Interaction"
-    glb_path = repo_root / "unity" / "Assets" / "Art" / "Models" / "tree_full.glb"
+    tracks_dir = repo_root / UNITY_ASSETS / "Audio" / "Tracks"
+    interaction_dir = repo_root / UNITY_ASSETS / "Audio" / "Interaction"
+    models_dir = repo_root / UNITY_ASSETS / "Art" / "Models"
 
     log.info("=== AquiFuturo asset validator ===")
     log.info(f"Repo root: {repo_root}")
@@ -391,10 +360,10 @@ def run_validation(repo_root: Path) -> int:
             all_errors.append(e)
             log.error(e)
 
-    # --- tree_full.glb ---
-    log.info("[4/4] Validating tree_full.glb …")
-    glb_errors = validate_glb(glb_path)
-    for e in glb_errors:
+    # --- FBX models ---
+    log.info("[4/4] Validating FBX models …")
+    model_errors = validate_models(models_dir)
+    for e in model_errors:
         if e.startswith("TODO"):
             all_warnings.append(e)
             log.warning(e)
