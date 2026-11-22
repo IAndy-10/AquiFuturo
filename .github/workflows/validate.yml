@@ -1,0 +1,46 @@
+name: Validate assets
+
+# SPEC.md §14.4: on push, lint tools/ with ruff and run validate_assets.py.
+# Unity is not built in CI (no Unity Cloud Build for the MVP).
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Only the audio is pulled from LFS: the validator reads WAV headers but
+      # only checks that the FBX models exist. The audio is cached by LFS object
+      # IDs, so LFS bandwidth is used only when the audio changes.
+      - name: List LFS audio objects
+        run: git lfs ls-files --long --include="AquiFuturo-app/Assets/Audio/**" | cut -d' ' -f1 | sort > .lfs-audio-ids
+
+      - name: Cache LFS audio
+        uses: actions/cache@v4
+        with:
+          path: .git/lfs
+          key: lfs-audio-${{ hashFiles('.lfs-audio-ids') }}
+
+      - name: Pull LFS audio
+        run: git lfs pull --include="AquiFuturo-app/Assets/Audio/**"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install tools
+        run: pip install "soundfile==0.14.0" "ruff==0.17.6"
+
+      - name: Lint tools/ (ruff)
+        run: ruff check tools/
+
+      - name: Validate assets
+        run: python tools/validate_assets.py

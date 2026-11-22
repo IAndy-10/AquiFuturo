@@ -337,7 +337,7 @@ def synthesise_modal_strikes(
 
     # A click of width T low-passes at ~1/T; too wide and it attenuates the very
     # band we want to excite. bl < 3 samples ⇒ use a bare unit impulse.
-    bl = max(1, int(round(burst_ms * 1e-3 * sr)))
+    bl = max(1, round(burst_ms * 1e-3 * sr))
     if bl < 3:
         burst = np.ones(1)
     else:
