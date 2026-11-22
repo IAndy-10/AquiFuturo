@@ -282,7 +282,7 @@ Zone interaction uses four axis-aligned Box Colliders (not a MeshCollider) place
 
 `tools/validate_assets.py` — checks node/edge referential integrity in `root_graph.json`; that every manifest track and interaction file exists in `Assets/Audio/`; that all node positions fall inside `bounds`; that all five tracks are 48 kHz stereo and **identical in sample length**. Run in CI (§14.4) and before every Unity import.
 
-> Note: the GLB validator (`tree_full.glb` check) is still present in the script but corresponds to a dropped asset. It will be removed in `feat/polish-and-ui`.
+It also checks that the three FBX models in §5.3 exist, and reports any WAV that is still a Git LFS pointer. Asset paths are resolved under `AquiFuturo-app/Assets/`. The old `tree_full.glb` check was removed with the dropped asset.
 
 ---
 
