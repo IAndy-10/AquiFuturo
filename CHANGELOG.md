@@ -7,6 +7,7 @@ Format: `<type>: <description>` — one line per milestone entry.
 
 ## Unreleased
 
+- docs: README — pipeline diagram, Python tool usage with real paths, validation + CI section, demo video; fix repository layout (AquiFuturo-app/, no assets_src/)
 - ci: GitHub Actions workflow runs ruff on tools/ and validate_assets.py on every push and PR (SPEC §14.4), with LFS audio cached
 - fix: validate_assets.py — resolve assets under AquiFuturo-app/Assets/, replace dropped tree_full.glb check with FBX model check (SPEC §5.3), report LFS pointers; drop pygltflib
 - fix: ruff clean on tools/ — drop redundant int(round()) casts, use datetime.UTC
