@@ -32,7 +32,7 @@ import json
 import logging
 import sys
 from collections import deque
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -364,7 +364,7 @@ def build_graph(
     return {
         "schema_version":   SUPPORTED_SCHEMA_VERSION,
         "tree_id":          tree_id,
-        "generated_utc":    datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_utc":    datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source_mesh":      source_mesh,
         "units":            "meters",
         "coordinate_space": "unity_y_up",

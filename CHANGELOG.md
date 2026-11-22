@@ -7,6 +7,7 @@ Format: `<type>: <description>` — one line per milestone entry.
 
 ## Unreleased
 
+- fix: ruff clean on tools/ — drop redundant int(round()) casts, use datetime.UTC
 - fix: smooth 2 s fade-out on test audio clip to eliminate end-of-clip click
 - fix: instruction panel grammar — all three steps rewritten for clarity
 - feat: interactionGainDb in InteractionSettingsConfig — zone one-shot level control (default −12 dB)

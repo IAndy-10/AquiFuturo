@@ -371,7 +371,7 @@ def synthesise_strikes(
     # attenuates the very band we are trying to excite (a 2 ms click removes
     # ~20 dB at 3 kHz, which is why `terminal` stayed quiet).  burst_ms < 0
     # picks a quarter period of the top of the class window automatically.
-    bl = max(1, int(round(burst_ms * 1e-3 * sr)))
+    bl = max(1, round(burst_ms * 1e-3 * sr))
     if bl < 3:
         burst = np.ones(1)                     # unit impulse: fully broadband
     else:
