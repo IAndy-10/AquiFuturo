@@ -179,4 +179,4 @@ AquiFuturo/
 
 ## License
 
-See thesis document for terms.
+[MIT](LICENSE) © 2026 Italo Rojas

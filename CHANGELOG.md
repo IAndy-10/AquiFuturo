@@ -7,6 +7,7 @@ Format: `<type>: <description>` — one line per milestone entry.
 
 ## Unreleased
 
+- chore: add MIT license
 - chore: stop tracking Unity-generated xcode_build/Libraries/ (incl. baselib.a, libUnityARKit.a), already in .gitignore
 - docs: README — pipeline diagram, Python tool usage with real paths, validation + CI section, demo video; fix repository layout (AquiFuturo-app/, no assets_src/)
 - ci: GitHub Actions workflow runs ruff on tools/ and validate_assets.py on every push and PR (SPEC §14.4), with LFS audio cached
